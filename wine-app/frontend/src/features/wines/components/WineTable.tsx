@@ -1,4 +1,25 @@
-import { Link } from "react-router";
+import {
+  MoreHoriz,
+} from "@mui/icons-material";
+
+import {
+  IconButton,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Tooltip,
+} from "@mui/material";
+
+import {
+  Link,
+} from "react-router";
+
+import {
+  WineBadge,
+} from "../../../components/common/WineBadge";
 
 import type {
   Wine,
@@ -17,7 +38,9 @@ function formatPrice(
     return "-";
   }
 
-  return `${value.toLocaleString()}円`;
+  return `¥${value.toLocaleString(
+    "ja-JP",
+  )}`;
 }
 
 
@@ -26,80 +49,133 @@ export function WineTable({
 }: WineTableProps) {
   if (wines.length === 0) {
     return (
-      <p>
+      <div className="rounded-xl border border-app-border bg-app-surface px-6 py-16 text-center text-app-text-secondary">
         条件に一致するワインがありません。
-      </p>
+      </div>
     );
   }
 
   return (
-    <div>
-      <table>
-        <thead>
-          <tr>
-            <th>ワイン名</th>
-            <th>種類</th>
-            <th>スタイル</th>
-            <th>国</th>
-            <th>生産者</th>
-            <th>品種</th>
-            <th>Vintage</th>
-            <th>売価</th>
-            <th>在庫</th>
-            <th>場所</th>
-          </tr>
-        </thead>
+    <TableContainer>
+      <Table
+        stickyHeader
+        aria-label="ワイン一覧"
+      >
+        <TableHead>
+          <TableRow>
+            <TableCell>
+              ワイン名
+            </TableCell>
 
-        <tbody>
+            <TableCell>
+              種類
+            </TableCell>
+
+            <TableCell>
+              スタイル
+            </TableCell>
+
+            <TableCell>
+              生産者
+            </TableCell>
+
+            <TableCell>
+              生産国
+            </TableCell>
+
+            <TableCell align="center">
+              Vintage
+            </TableCell>
+
+            <TableCell align="right">
+              売価
+            </TableCell>
+
+            <TableCell align="right">
+              在庫本数
+            </TableCell>
+
+            <TableCell>
+              保管場所
+            </TableCell>
+
+            <TableCell align="center">
+              アクション
+            </TableCell>
+          </TableRow>
+        </TableHead>
+
+        <TableBody>
           {wines.map((wine) => (
-            <tr key={wine.id}>
-              <td>
+            <TableRow
+              key={wine.id}
+              hover
+            >
+              <TableCell
+                sx={{
+                  minWidth: 220,
+                }}
+              >
                 <Link
                   to={`/wines/${wine.id}`}
+                  className="font-medium text-app-text transition-colors hover:text-app-primary hover:underline"
                 >
                   {wine.name}
                 </Link>
-              </td>
+              </TableCell>
 
-              <td>
-                {wine.wine_type ?? "-"}
-              </td>
+              <TableCell>
+                <WineBadge
+                  value={wine.wine_type}
+                />
+              </TableCell>
 
-              <td>
-                {wine.style_type ?? "-"}
-              </td>
+              <TableCell>
+                <WineBadge
+                  value={wine.style_type}
+                />
+              </TableCell>
 
-              <td>
-                {wine.country ?? "-"}
-              </td>
-
-              <td>
+              <TableCell>
                 {wine.producer ?? "-"}
-              </td>
+              </TableCell>
 
-              <td>
-                {wine.grape_variety ?? "-"}
-              </td>
+              <TableCell>
+                {wine.country ?? "-"}
+              </TableCell>
 
-              <td>
+              <TableCell align="center">
                 {wine.vintage ?? "-"}
-              </td>
+              </TableCell>
 
-              <td>
+              <TableCell align="right">
                 {formatPrice(
                   wine.sale_price,
                 )}
-              </td>
+              </TableCell>
 
-              <td>{wine.quantity}</td>
+              <TableCell align="right">
+                {wine.quantity}
+              </TableCell>
 
-              <td>
+              <TableCell>
                 {wine.location ?? "-"}
-              </td>
-            </tr>
+              </TableCell>
+
+              <TableCell align="center">
+                <Tooltip title="操作">
+                  <IconButton
+                    size="small"
+                    aria-label={`${wine.name}の操作`}
+                  >
+                    <MoreHoriz />
+                  </IconButton>
+                </Tooltip>
+              </TableCell>
+            </TableRow>
           ))}
-        </tbody>
-      </table>
-    </div>
+        </TableBody>
+      </Table>
+    </TableContainer>
   );
 }

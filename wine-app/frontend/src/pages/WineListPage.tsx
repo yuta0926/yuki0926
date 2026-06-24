@@ -290,51 +290,64 @@ import {
   
   
     return (
-      <main>
-        <header>
-          <h1>ワイン一覧</h1>
-        </header>
-  
+      <div className="flex flex-col gap-6">
+        <div>
+          <h1 className="font-display text-3xl font-medium tracking-wide text-app-text md:text-4xl">
+            ワイン一覧
+          </h1>
+
+          <p className="mt-2 text-sm text-app-text-secondary">
+            登録されているワインの検索・確認ができます。
+          </p>
+        </div>
+
         <WineSearchForm
           key={searchParams.toString()}
           initialValues={filters}
           onSearch={handleSearch}
           onClear={handleClear}
         />
-  
+
         {isPending ? (
-          <p>ワインを読み込んでいます...</p>
+          <div className="rounded-xl border border-app-border bg-app-surface px-6 py-16 text-center text-app-text-secondary">
+            ワインを読み込んでいます...
+          </div>
         ) : isError ? (
-          <div role="alert">
-            <p>
+          <div
+            role="alert"
+            className="rounded-xl border border-red-200 bg-red-50 px-6 py-8 text-red-800"
+          >
+            <p className="font-semibold">
               ワイン一覧の取得に失敗しました。
             </p>
-  
-            <p>
+
+            <p className="mt-2 text-sm">
               {error instanceof Error
                 ? error.message
                 : "不明なエラーです。"}
             </p>
           </div>
         ) : (
-          <>
-            <div>
-              <p>
+          <div className="overflow-hidden rounded-xl bg-app-surface">
+            <div className="flex items-center justify-between border-b border-app-border px-4 py-3">
+              <p className="text-sm text-app-text-secondary">
                 検索結果：
-                {data.total}件
+                <span className="ml-1 font-semibold text-app-text">
+                  {data.total}件
+                </span>
               </p>
-  
+
               {isFetching && (
-                <p>
-                  最新のデータを取得中です...
+                <p className="text-xs text-app-text-secondary">
+                  最新データを取得中...
                 </p>
               )}
             </div>
-  
+
             <WineTable
               wines={data.items}
             />
-  
+
             <WinePagination
               page={page}
               limit={limit}
@@ -347,8 +360,8 @@ import {
                 handleLimitChange
               }
             />
-          </>
+          </div>
         )}
-      </main>
+      </div>
     );
   }
