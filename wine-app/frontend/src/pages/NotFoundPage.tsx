@@ -1,0 +1,14 @@
+import { Link } from "react-router";
+
+export function NotFoundPage() {
+  return (
+    <main>
+      <h1>404</h1>
+      <p>ページが見つかりません。</p>
+
+      <Link to="/wines">
+        ワイン一覧へ戻る
+      </Link>
+    </main>
+  );
+}
