@@ -3,7 +3,6 @@ import type {
 } from "react";
 
 import {
-  Autocomplete,
   Button,
   FormControl,
   InputAdornment,

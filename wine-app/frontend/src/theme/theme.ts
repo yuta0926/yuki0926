@@ -187,39 +187,37 @@ export const appTheme = createTheme({
       },
     },
 
-    MuiButton: {
-      defaultProps: {
-        disableElevation: true,
+MuiButton: {
+  defaultProps: {
+    disableElevation: true,
+  },
+
+  styleOverrides: {
+    root: {
+      minHeight: 44,
+      borderRadius:
+        designTokens.radius.medium,
+      paddingInline: 20,
+
+      "&.MuiButton-containedPrimary:hover": {
+        backgroundColor:
+          designTokens.colors.primaryHover,
       },
 
-      styleOverrides: {
-        root: {
-          minHeight: 44,
-          borderRadius:
-            designTokens.radius.medium,
-          paddingInline: 20,
-        },
+      "&.MuiButton-outlined": {
+        borderColor:
+          designTokens.colors.borderStrong,
+      },
 
-        containedPrimary: {
-          "&:hover": {
-            backgroundColor:
-              designTokens.colors.primaryHover,
-          },
-        },
-
-        outlined: {
-          borderColor:
-            designTokens.colors.borderStrong,
-
-          "&:hover": {
-            borderColor:
-              designTokens.colors.primary,
-            backgroundColor:
-              designTokens.colors.primarySoft,
-          },
-        },
+      "&.MuiButton-outlined:hover": {
+        borderColor:
+          designTokens.colors.primary,
+        backgroundColor:
+          designTokens.colors.primarySoft,
       },
     },
+  },
+},
 
     MuiPaper: {
       styleOverrides: {
