@@ -3,13 +3,11 @@ substitutions:
   _REPOSITORY: wine-app
   _BACKEND_SERVICE: wine-api
   _FRONTEND_SERVICE: wine-web
-  _RUNTIME_SERVICE_ACCOUNT: wine-cloud-run@$PROJECT_ID.iam.gserviceaccount.com
-
 
 steps:
-  # =====================================
+  # -------------------------------------
   # Backend
-  # =====================================
+  # -------------------------------------
 
   - id: build-backend
     name: gcr.io/cloud-builders/docker
@@ -17,7 +15,7 @@ steps:
       - build
       - -t
       - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_BACKEND_SERVICE}:$BUILD_ID
-      - ./backend
+      - ./wine-app/backend
 
   - id: push-backend
     name: gcr.io/cloud-builders/docker
@@ -36,7 +34,7 @@ steps:
       - --region=${_REGION}
       - --platform=managed
       - --allow-unauthenticated
-      - --service-account=${_RUNTIME_SERVICE_ACCOUNT}
+      - --service-account=wine-cloud-run@$PROJECT_ID.iam.gserviceaccount.com
       - --max-instances=1
       - --set-env-vars=CORS_ORIGINS=http://localhost:5173
       - --quiet
@@ -55,9 +53,9 @@ steps:
         echo "Backend URL:"
         cat /workspace/backend-url.txt
 
-  # =====================================
+  # -------------------------------------
   # Frontend
-  # =====================================
+  # -------------------------------------
 
   - id: build-frontend
     name: gcr.io/cloud-builders/docker
@@ -68,7 +66,7 @@ steps:
         docker build \
           --build-arg "VITE_API_BASE_URL=$$(cat /workspace/backend-url.txt)" \
           -t "${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_FRONTEND_SERVICE}:$BUILD_ID" \
-          ./frontend
+          ./wine-app/frontend
 
   - id: push-frontend
     name: gcr.io/cloud-builders/docker
@@ -87,7 +85,7 @@ steps:
       - --region=${_REGION}
       - --platform=managed
       - --allow-unauthenticated
-      - --service-account=${_RUNTIME_SERVICE_ACCOUNT}
+      - --service-account=wine-cloud-run@$PROJECT_ID.iam.gserviceaccount.com
       - --max-instances=1
       - --quiet
 
@@ -105,7 +103,7 @@ steps:
         echo "Frontend URL:"
         cat /workspace/frontend-url.txt
 
-  # フロントのCloud Run URLをバックエンドCORSへ設定
+  # フロントURLをバックエンドのCORSに設定
   - id: update-backend-cors
     name: gcr.io/google.com/cloudsdktool/cloud-sdk
     entrypoint: bash
@@ -117,9 +115,9 @@ steps:
           --set-env-vars="CORS_ORIGINS=$$(cat /workspace/frontend-url.txt)" \
           --quiet
 
-images:
-  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_BACKEND_SERVICE}:$BUILD_ID
-  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_FRONTEND_SERVICE}:$BUILD_ID
+        echo "Deployment completed."
+        echo "Backend: $$(cat /workspace/backend-url.txt)"
+        echo "Frontend: $$(cat /workspace/frontend-url.txt)"
 
 options:
   logging: CLOUD_LOGGING_ONLY

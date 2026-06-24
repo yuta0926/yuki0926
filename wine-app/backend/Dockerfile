@@ -13,7 +13,7 @@ RUN pip install \
 
 COPY app ./app
 
-# 進捗共有用に既存のSQLiteを含める場合
+# デモ用SQLiteにサンプルデータを含める場合
 COPY wine.db ./wine.db
 
 CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8080}"]
