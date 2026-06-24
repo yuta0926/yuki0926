@@ -30,13 +30,15 @@ steps:
       - run
       - deploy
       - ${_BACKEND_SERVICE}
+      - --project=$PROJECT_ID
       - --image=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_BACKEND_SERVICE}:$BUILD_ID
       - --region=${_REGION}
       - --platform=managed
       - --allow-unauthenticated
       - --service-account=wine-cloud-run@$PROJECT_ID.iam.gserviceaccount.com
       - --max-instances=1
-      - --set-env-vars=CORS_ORIGINS=http://localhost:5173
+      # フロントの決定的URLはデプロイ前でも計算可能
+      - --set-env-vars=CORS_ORIGINS=https://${_FRONTEND_SERVICE}-$PROJECT_NUMBER.${_REGION}.run.app
       - --quiet
 
   - id: get-backend-url
@@ -45,13 +47,25 @@ steps:
     args:
       - -c
       - |
+        # Cloud Runのstatus.url
         gcloud run services describe "${_BACKEND_SERVICE}" \
+          --project="$PROJECT_ID" \
           --region="${_REGION}" \
           --format="value(status.url)" \
           > /workspace/backend-url.txt
 
-        echo "Backend URL:"
+        # 決定的URL
+        echo -n \
+          "https://${_BACKEND_SERVICE}-$PROJECT_NUMBER.${_REGION}.run.app" \
+          > /workspace/backend-deterministic-url.txt
+
+        echo "Backend status URL:"
         cat /workspace/backend-url.txt
+        echo
+
+        echo "Backend deterministic URL:"
+        cat /workspace/backend-deterministic-url.txt
+        echo
 
   # -------------------------------------
   # Frontend
@@ -63,9 +77,12 @@ steps:
     args:
       - -c
       - |
+        # フロントにはバックエンドの決定的URLを埋め込む
         docker build \
-          --build-arg "VITE_API_BASE_URL=$$(cat /workspace/backend-url.txt)" \
-          -t "${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_FRONTEND_SERVICE}:$BUILD_ID" \
+          --build-arg \
+          "VITE_API_BASE_URL=$$(cat /workspace/backend-deterministic-url.txt)" \
+          -t \
+          "${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_FRONTEND_SERVICE}:$BUILD_ID" \
           ./wine-app/frontend
 
   - id: push-frontend
@@ -81,6 +98,7 @@ steps:
       - run
       - deploy
       - ${_FRONTEND_SERVICE}
+      - --project=$PROJECT_ID
       - --image=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_FRONTEND_SERVICE}:$BUILD_ID
       - --region=${_REGION}
       - --platform=managed
@@ -95,29 +113,67 @@ steps:
     args:
       - -c
       - |
+        # Cloud Runのstatus.url
         gcloud run services describe "${_FRONTEND_SERVICE}" \
+          --project="$PROJECT_ID" \
           --region="${_REGION}" \
           --format="value(status.url)" \
           > /workspace/frontend-url.txt
 
-        echo "Frontend URL:"
-        cat /workspace/frontend-url.txt
+        # 決定的URL
+        echo -n \
+          "https://${_FRONTEND_SERVICE}-$PROJECT_NUMBER.${_REGION}.run.app" \
+          > /workspace/frontend-deterministic-url.txt
 
-  # フロントURLをバックエンドのCORSに設定
+        echo "Frontend status URL:"
+        cat /workspace/frontend-url.txt
+        echo
+
+        echo "Frontend deterministic URL:"
+        cat /workspace/frontend-deterministic-url.txt
+        echo
+
+  # -------------------------------------
+  # Backend CORS
+  # -------------------------------------
+
   - id: update-backend-cors
     name: gcr.io/google.com/cloudsdktool/cloud-sdk
     entrypoint: bash
     args:
       - -c
       - |
+        FRONTEND_STATUS_URL="$$(cat /workspace/frontend-url.txt)"
+        FRONTEND_DETERMINISTIC_URL="$$(cat /workspace/frontend-deterministic-url.txt)"
+
+        CORS_ORIGINS="$${FRONTEND_STATUS_URL},$${FRONTEND_DETERMINISTIC_URL}"
+
+        echo "Updating backend CORS:"
+        echo "$${CORS_ORIGINS}"
+
         gcloud run services update "${_BACKEND_SERVICE}" \
+          --project="$PROJECT_ID" \
           --region="${_REGION}" \
-          --set-env-vars="CORS_ORIGINS=$$(cat /workspace/frontend-url.txt)" \
+          --update-env-vars="^@^CORS_ORIGINS=$${CORS_ORIGINS}" \
           --quiet
 
         echo "Deployment completed."
-        echo "Backend: $$(cat /workspace/backend-url.txt)"
-        echo "Frontend: $$(cat /workspace/frontend-url.txt)"
+
+        echo "Backend status URL:"
+        cat /workspace/backend-url.txt
+        echo
+
+        echo "Backend deterministic URL:"
+        cat /workspace/backend-deterministic-url.txt
+        echo
+
+        echo "Frontend status URL:"
+        cat /workspace/frontend-url.txt
+        echo
+
+        echo "Frontend deterministic URL:"
+        cat /workspace/frontend-deterministic-url.txt
+        echo
 
 options:
   logging: CLOUD_LOGGING_ONLY
