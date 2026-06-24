@@ -1,0 +1,127 @@
+substitutions:
+  _REGION: asia-northeast1
+  _REPOSITORY: wine-app
+  _BACKEND_SERVICE: wine-api
+  _FRONTEND_SERVICE: wine-web
+  _RUNTIME_SERVICE_ACCOUNT: wine-cloud-run@$PROJECT_ID.iam.gserviceaccount.com
+
+
+steps:
+  # =====================================
+  # Backend
+  # =====================================
+
+  - id: build-backend
+    name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - -t
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_BACKEND_SERVICE}:$BUILD_ID
+      - ./backend
+
+  - id: push-backend
+    name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_BACKEND_SERVICE}:$BUILD_ID
+
+  - id: deploy-backend
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - ${_BACKEND_SERVICE}
+      - --image=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_BACKEND_SERVICE}:$BUILD_ID
+      - --region=${_REGION}
+      - --platform=managed
+      - --allow-unauthenticated
+      - --service-account=${_RUNTIME_SERVICE_ACCOUNT}
+      - --max-instances=1
+      - --set-env-vars=CORS_ORIGINS=http://localhost:5173
+      - --quiet
+
+  - id: get-backend-url
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        gcloud run services describe "${_BACKEND_SERVICE}" \
+          --region="${_REGION}" \
+          --format="value(status.url)" \
+          > /workspace/backend-url.txt
+
+        echo "Backend URL:"
+        cat /workspace/backend-url.txt
+
+  # =====================================
+  # Frontend
+  # =====================================
+
+  - id: build-frontend
+    name: gcr.io/cloud-builders/docker
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        docker build \
+          --build-arg "VITE_API_BASE_URL=$$(cat /workspace/backend-url.txt)" \
+          -t "${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_FRONTEND_SERVICE}:$BUILD_ID" \
+          ./frontend
+
+  - id: push-frontend
+    name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_FRONTEND_SERVICE}:$BUILD_ID
+
+  - id: deploy-frontend
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - ${_FRONTEND_SERVICE}
+      - --image=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_FRONTEND_SERVICE}:$BUILD_ID
+      - --region=${_REGION}
+      - --platform=managed
+      - --allow-unauthenticated
+      - --service-account=${_RUNTIME_SERVICE_ACCOUNT}
+      - --max-instances=1
+      - --quiet
+
+  - id: get-frontend-url
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        gcloud run services describe "${_FRONTEND_SERVICE}" \
+          --region="${_REGION}" \
+          --format="value(status.url)" \
+          > /workspace/frontend-url.txt
+
+        echo "Frontend URL:"
+        cat /workspace/frontend-url.txt
+
+  # フロントのCloud Run URLをバックエンドCORSへ設定
+  - id: update-backend-cors
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        gcloud run services update "${_BACKEND_SERVICE}" \
+          --region="${_REGION}" \
+          --set-env-vars="CORS_ORIGINS=$$(cat /workspace/frontend-url.txt)" \
+          --quiet
+
+images:
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_BACKEND_SERVICE}:$BUILD_ID
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_FRONTEND_SERVICE}:$BUILD_ID
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+
+timeout: 1200s
