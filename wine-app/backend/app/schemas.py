@@ -1,11 +1,16 @@
 from datetime import date, datetime
+from typing import Literal
 
 from pydantic import (
     BaseModel,
     ConfigDict,
     Field,
+    computed_field,
     model_validator,
 )
+
+
+TransactionType = Literal["in", "out", "move", "adjust"]
 
 
 class WineBase(BaseModel):
@@ -50,6 +55,12 @@ class WineBase(BaseModel):
     )
 
     location: str | None = None
+    management_code: str | None = None
+    reserved_quantity: int = Field(
+        default=0,
+        ge=0,
+    )
+    image_url: str | None = None
     comment: str | None = None
     ai_check_status: str | None = None
 
@@ -107,6 +118,12 @@ class WineUpdate(BaseModel):
     )
 
     location: str | None = None
+    management_code: str | None = None
+    reserved_quantity: int | None = Field(
+        default=None,
+        ge=0,
+    )
+    image_url: str | None = None
     comment: str | None = None
     ai_check_status: str | None = None
 
@@ -126,14 +143,37 @@ class WineUpdate(BaseModel):
         return self
 
 
+class InventoryTransactionResponse(BaseModel):
+    id: int
+    transaction_type: TransactionType
+    quantity: int
+    from_location: str | None = None
+    to_location: str | None = None
+    note: str | None = None
+    operated_by: str | None = None
+    transaction_at: datetime
+
+    model_config = ConfigDict(
+        from_attributes=True,
+    )
+
+
 class WineResponse(WineBase):
     id: int
     created_at: datetime
     updated_at: datetime
 
+    recent_transactions: list[InventoryTransactionResponse] = []
+
     model_config = ConfigDict(
         from_attributes=True,
     )
+
+    @computed_field
+    @property
+    def available_quantity(self) -> int:
+        return self.quantity - (self.reserved_quantity or 0)
+
 
 class WineListResponse(BaseModel):
     """

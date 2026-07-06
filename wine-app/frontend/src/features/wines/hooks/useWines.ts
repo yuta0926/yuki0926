@@ -1,6 +1,14 @@
-import { useQuery } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 
-import { getWines } from "../api/winesApi";
+import {
+  deleteWine,
+  getWine,
+  getWines,
+} from "../api/winesApi";
 
 import type {
   WineSearchParams,
@@ -18,6 +26,12 @@ export const wineQueryKeys = {
     ...wineQueryKeys.lists(),
     params,
   ] as const,
+
+  detail: (wineId: number) => [
+    ...wineQueryKeys.all,
+    "detail",
+    wineId,
+  ] as const,
 };
 
 export function useWines(
@@ -31,5 +45,30 @@ export function useWines(
     // ページ切替中に前ページのデータを一時表示する
     placeholderData: (previousData) =>
       previousData,
+  });
+}
+
+export function useWine(
+  wineId: number,
+) {
+  return useQuery({
+    queryKey: wineQueryKeys.detail(wineId),
+
+    queryFn: () => getWine(wineId),
+  });
+}
+
+export function useDeleteWine() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (wineId: number) =>
+      deleteWine(wineId),
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: wineQueryKeys.lists(),
+      });
+    },
   });
 }

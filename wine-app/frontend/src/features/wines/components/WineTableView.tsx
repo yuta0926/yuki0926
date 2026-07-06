@@ -21,32 +21,21 @@ import {
   WineBadge,
 } from "../../../components/common/WineBadge";
 
+import { formatPrice } from "../utils/formatPrice";
+
 import type {
   Wine,
 } from "../types/wine";
 
 
-type WineTableProps = {
+type WineTableViewProps = {
   wines: Wine[];
 };
 
 
-function formatPrice(
-  value: number | null,
-): string {
-  if (value === null) {
-    return "-";
-  }
-
-  return `¥${value.toLocaleString(
-    "ja-JP",
-  )}`;
-}
-
-
-export function WineTable({
+export function WineTableView({
   wines,
-}: WineTableProps) {
+}: WineTableViewProps) {
   if (wines.length === 0) {
     return (
       <div className="rounded-xl border border-app-border bg-app-surface px-6 py-16 text-center text-app-text-secondary">

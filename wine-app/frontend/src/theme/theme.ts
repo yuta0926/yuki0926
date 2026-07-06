@@ -50,6 +50,78 @@ export const designTokens = {
       background: "#F9EDEF",
       border: "#E8CBD1",
     },
+
+    sparkling: {
+      text: "#7A6A35",
+      background: "#F6F0DA",
+      border: "#DED19A",
+    },
+  },
+
+  style: {
+    classic: {
+      text: "#62645E",
+      background: "#F1F1EC",
+      border: "#E0E0D8",
+    },
+
+    natural: {
+      text: "#456148",
+      background: "#EDF2E9",
+      border: "#D5DFD0",
+    },
+  },
+
+  aiStatus: {
+    confirmed: {
+      text: "#3F6B4F",
+      background: "#EAF2EC",
+      border: "#C9DBCD",
+    },
+
+    unconfirmed: {
+      text: "#62655D",
+      background: "#F1F1EC",
+      border: "#E0E0D8",
+    },
+
+    needsReview: {
+      text: "#9A682F",
+      background: "#FBF1E4",
+      border: "#E8CFAE",
+    },
+
+    needsFix: {
+      text: "#934444",
+      background: "#FBEFEF",
+      border: "#E8CACA",
+    },
+  },
+
+  transactionType: {
+    in: {
+      text: "#526B48",
+      background: "#F0F4EC",
+      border: "#CCD8C5",
+    },
+
+    out: {
+      text: "#934444",
+      background: "#FBEFEF",
+      border: "#E8CACA",
+    },
+
+    move: {
+      text: "#3E6E6B",
+      background: "#EAF3F2",
+      border: "#C6DEDC",
+    },
+
+    adjust: {
+      text: "#7A6A35",
+      background: "#F6F0DA",
+      border: "#DED19A",
+    },
   },
 
   layout: {

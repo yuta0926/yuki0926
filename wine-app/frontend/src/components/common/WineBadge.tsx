@@ -36,19 +36,15 @@ function getWineColors(
     return designTokens.wine.rose;
   }
 
-  if (value === "ナチュール") {
-    return {
-      text: "#456148",
-      background: "#EDF2E9",
-      border: "#D5DFD0",
-    };
+  if (value.includes("スパークリング")) {
+    return designTokens.wine.sparkling;
   }
 
-  return {
-    text: "#62645E",
-    background: "#F1F1EC",
-    border: "#E0E0D8",
-  };
+  if (value === "ナチュール") {
+    return designTokens.style.natural;
+  }
+
+  return designTokens.style.classic;
 }
 
 

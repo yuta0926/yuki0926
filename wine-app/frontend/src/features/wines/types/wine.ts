@@ -23,15 +23,36 @@ export type Wine = {
     sale_price: number | null;
   
     location: string | null;
+    management_code: string | null;
+    reserved_quantity: number;
+    available_quantity: number;
+    image_url: string | null;
     comment: string | null;
-  
+
     ai_check_status: string | null;
-  
+
+    recent_transactions: InventoryTransaction[];
+
     created_at: string;
     updated_at: string;
   };
-  
-  
+
+
+  export type TransactionType = "in" | "out" | "move" | "adjust";
+
+
+  export type InventoryTransaction = {
+    id: number;
+    transaction_type: TransactionType;
+    quantity: number;
+    from_location: string | null;
+    to_location: string | null;
+    note: string | null;
+    operated_by: string | null;
+    transaction_at: string;
+  };
+
+
   export type WineListResponse = {
     total: number;
     skip: number;
@@ -101,8 +122,10 @@ export type Wine = {
     sale_price?: number | null;
   
     location?: string | null;
+    management_code?: string | null;
+    image_url?: string | null;
     comment?: string | null;
-  
+
     ai_check_status?: string | null;
   };
   

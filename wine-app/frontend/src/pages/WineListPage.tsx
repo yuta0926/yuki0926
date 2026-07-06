@@ -2,9 +2,14 @@ import {
     useSearchParams,
   } from "react-router";
   
+  import { WineCardGridView } from "../features/wines/components/WineCardGridView";
   import { WinePagination } from "../features/wines/components/WinePagination";
   import { WineSearchForm } from "../features/wines/components/WineSearchForm";
-  import { WineTable } from "../features/wines/components/WineTable";
+  import { WineTableView } from "../features/wines/components/WineTableView";
+  import {
+    WineViewToggle,
+    type WineViewMode,
+  } from "../features/wines/components/WineViewToggle";
   import { useWines } from "../features/wines/hooks/useWines";
   
   import type {
@@ -89,6 +94,15 @@ import {
   }
   
   
+  function getViewParam(
+    searchParams: URLSearchParams,
+  ): WineViewMode {
+    return searchParams.get("view") === "card"
+      ? "card"
+      : "list";
+  }
+
+
   function buildUrlSearchParams(
     values: WineSearchParams,
     page: number,
@@ -148,6 +162,10 @@ import {
       searchParams,
       "limit",
       DEFAULT_LIMIT,
+    );
+
+    const view = getViewParam(
+      searchParams,
     );
   
   
@@ -287,6 +305,23 @@ import {
         ),
       );
     }
+
+
+    function handleViewChange(
+      nextView: WineViewMode,
+    ) {
+      const nextParams = new URLSearchParams(
+        searchParams,
+      );
+
+      if (nextView === "list") {
+        nextParams.delete("view");
+      } else {
+        nextParams.set("view", nextView);
+      }
+
+      setSearchParams(nextParams);
+    }
   
   
     return (
@@ -329,24 +364,35 @@ import {
           </div>
         ) : (
           <div className="overflow-hidden rounded-xl bg-app-surface">
-            <div className="flex items-center justify-between border-b border-app-border px-4 py-3">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-app-border px-4 py-3">
               <p className="text-sm text-app-text-secondary">
                 検索結果：
                 <span className="ml-1 font-semibold text-app-text">
                   {data.total}件
                 </span>
+
+                {isFetching && (
+                  <span className="ml-3 text-xs text-app-text-secondary">
+                    最新データを取得中...
+                  </span>
+                )}
               </p>
 
-              {isFetching && (
-                <p className="text-xs text-app-text-secondary">
-                  最新データを取得中...
-                </p>
-              )}
+              <WineViewToggle
+                view={view}
+                onChange={handleViewChange}
+              />
             </div>
 
-            <WineTable
-              wines={data.items}
-            />
+            {view === "list" ? (
+              <WineTableView
+                wines={data.items}
+              />
+            ) : (
+              <WineCardGridView
+                wines={data.items}
+              />
+            )}
 
             <WinePagination
               page={page}

@@ -12,8 +12,9 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.models import Wine
+from app.models import InventoryTransaction, Wine
 from app.schemas import (
+    InventoryTransactionResponse,
     WineCreate,
     WineListResponse,
     WineResponse,
@@ -406,9 +407,11 @@ def get_wines(
 def get_wine(
     wine_id: int,
     db: DbSession,
-) -> Wine:
+) -> WineResponse:
     """
     IDを指定してワインを1件取得する。
+
+    直近の入出庫履歴を最大10件、詳細レスポンスに埋め込む。
     """
 
     wine = db.get(Wine, wine_id)
@@ -419,7 +422,20 @@ def get_wine(
             detail="指定されたワインが見つかりません。",
         )
 
-    return wine
+    recent_transactions = db.scalars(
+        select(InventoryTransaction)
+        .where(InventoryTransaction.wine_id == wine_id)
+        .order_by(InventoryTransaction.transaction_at.desc())
+        .limit(10)
+    ).all()
+
+    response = WineResponse.model_validate(wine)
+    response.recent_transactions = [
+        InventoryTransactionResponse.model_validate(transaction)
+        for transaction in recent_transactions
+    ]
+
+    return response
 
 
 @router.patch(
