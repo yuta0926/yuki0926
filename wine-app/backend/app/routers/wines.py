@@ -14,6 +14,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import InventoryTransaction, Wine
 from app.schemas import (
+    InventoryTransactionCreate,
     InventoryTransactionResponse,
     WineCreate,
     WineListResponse,
@@ -80,6 +81,30 @@ def find_duplicate_wine(
         )
 
     return db.scalar(statement)
+
+
+def build_wine_response(
+    db: Session,
+    wine: Wine,
+) -> WineResponse:
+    """
+    直近の入出庫履歴を最大10件埋め込んだワインレスポンスを組み立てる。
+    """
+
+    recent_transactions = db.scalars(
+        select(InventoryTransaction)
+        .where(InventoryTransaction.wine_id == wine.id)
+        .order_by(InventoryTransaction.transaction_at.desc())
+        .limit(10)
+    ).all()
+
+    response = WineResponse.model_validate(wine)
+    response.recent_transactions = [
+        InventoryTransactionResponse.model_validate(transaction)
+        for transaction in recent_transactions
+    ]
+
+    return response
 
 
 @router.post(
@@ -422,20 +447,7 @@ def get_wine(
             detail="指定されたワインが見つかりません。",
         )
 
-    recent_transactions = db.scalars(
-        select(InventoryTransaction)
-        .where(InventoryTransaction.wine_id == wine_id)
-        .order_by(InventoryTransaction.transaction_at.desc())
-        .limit(10)
-    ).all()
-
-    response = WineResponse.model_validate(wine)
-    response.recent_transactions = [
-        InventoryTransactionResponse.model_validate(transaction)
-        for transaction in recent_transactions
-    ]
-
-    return response
+    return build_wine_response(db, wine)
 
 
 @router.patch(
@@ -522,6 +534,81 @@ def update_wine(
     db.refresh(wine)
 
     return wine
+
+
+@router.post(
+    "/{wine_id}/transactions",
+    response_model=WineResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_wine_transaction(
+    wine_id: int,
+    transaction_data: InventoryTransactionCreate,
+    db: DbSession,
+) -> WineResponse:
+    """
+    入庫/出庫/移動/調整を記録し、在庫数・保管場所へ反映する。
+    """
+
+    wine = db.get(Wine, wine_id)
+
+    if wine is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="指定されたワインが見つかりません。",
+        )
+
+    transaction_type = transaction_data.transaction_type
+    quantity = transaction_data.quantity
+
+    from_location = transaction_data.from_location
+    to_location = transaction_data.to_location
+
+    if transaction_type == "in":
+        wine.quantity += quantity
+        to_location = to_location or wine.location
+
+    elif transaction_type == "out":
+        if quantity > wine.quantity:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="出庫数量が在庫数を超えています。",
+            )
+
+        wine.quantity -= quantity
+        from_location = from_location or wine.location
+
+    elif transaction_type == "move":
+        if wine.quantity == 0:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="在庫がないため移動できません。",
+            )
+
+        # 保管場所は1本ごとではなくワイン単位で管理しているため、
+        # 移動は現在庫すべてを対象として扱う。
+        quantity = wine.quantity
+        from_location = from_location or wine.location
+        wine.location = to_location
+
+    elif transaction_type == "adjust":
+        wine.quantity = quantity
+
+    transaction = InventoryTransaction(
+        wine_id=wine.id,
+        transaction_type=transaction_type,
+        quantity=quantity,
+        from_location=from_location,
+        to_location=to_location,
+        note=transaction_data.note,
+        operated_by=transaction_data.operated_by,
+    )
+
+    db.add(transaction)
+    db.commit()
+    db.refresh(wine)
+
+    return build_wine_response(db, wine)
 
 
 @router.delete(

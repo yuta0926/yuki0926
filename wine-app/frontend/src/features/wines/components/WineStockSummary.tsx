@@ -2,14 +2,16 @@ import { Button, Paper, Typography } from "@mui/material";
 
 import { designTokens } from "../../../theme/theme";
 import type { Wine } from "../types/wine";
+import type { MovableTransactionType } from "./WineTransactionDialog";
 
 
 type WineStockSummaryProps = {
   wine: Wine;
+  onAction: (type: MovableTransactionType) => void;
 };
 
 
-export function WineStockSummary({ wine }: WineStockSummaryProps) {
+export function WineStockSummary({ wine, onAction }: WineStockSummaryProps) {
   const inStock = wine.quantity > 0;
 
   return (
@@ -63,13 +65,30 @@ export function WineStockSummary({ wine }: WineStockSummaryProps) {
         </div>
 
         <div className="flex gap-2 border-t border-app-border pt-3">
-          <Button variant="outlined" size="small" disabled fullWidth>
+          <Button
+            variant="outlined"
+            size="small"
+            fullWidth
+            onClick={() => onAction("in")}
+          >
             入庫
           </Button>
-          <Button variant="outlined" size="small" disabled fullWidth>
+          <Button
+            variant="outlined"
+            size="small"
+            fullWidth
+            disabled={wine.quantity === 0}
+            onClick={() => onAction("out")}
+          >
             出庫
           </Button>
-          <Button variant="outlined" size="small" disabled fullWidth>
+          <Button
+            variant="outlined"
+            size="small"
+            fullWidth
+            disabled={wine.quantity === 0}
+            onClick={() => onAction("move")}
+          >
             移動
           </Button>
         </div>

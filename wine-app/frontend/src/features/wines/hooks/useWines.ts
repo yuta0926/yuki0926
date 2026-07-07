@@ -5,13 +5,19 @@ import {
 } from "@tanstack/react-query";
 
 import {
+  createWine,
+  createWineTransaction,
   deleteWine,
   getWine,
   getWines,
+  updateWine,
 } from "../api/winesApi";
 
 import type {
+  InventoryTransactionCreateInput,
+  WineCreateInput,
   WineSearchParams,
+  WineUpdateInput,
 } from "../types/wine";
 
 export const wineQueryKeys = {
@@ -55,6 +61,65 @@ export function useWine(
     queryKey: wineQueryKeys.detail(wineId),
 
     queryFn: () => getWine(wineId),
+  });
+}
+
+export function useCreateWine() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: WineCreateInput) =>
+      createWine(data),
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: wineQueryKeys.lists(),
+      });
+    },
+  });
+}
+
+export function useUpdateWine(
+  wineId: number,
+) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: WineUpdateInput) =>
+      updateWine(wineId, data),
+
+    onSuccess: (wine) => {
+      queryClient.setQueryData(
+        wineQueryKeys.detail(wineId),
+        wine,
+      );
+
+      queryClient.invalidateQueries({
+        queryKey: wineQueryKeys.lists(),
+      });
+    },
+  });
+}
+
+export function useCreateWineTransaction(
+  wineId: number,
+) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: InventoryTransactionCreateInput) =>
+      createWineTransaction(wineId, data),
+
+    onSuccess: (wine) => {
+      queryClient.setQueryData(
+        wineQueryKeys.detail(wineId),
+        wine,
+      );
+
+      queryClient.invalidateQueries({
+        queryKey: wineQueryKeys.lists(),
+      });
+    },
   });
 }
 

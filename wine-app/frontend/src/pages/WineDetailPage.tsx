@@ -21,6 +21,10 @@ import { WineInfoCard } from "../features/wines/components/WineInfoCard";
 import { WineManagementInfo } from "../features/wines/components/WineManagementInfo";
 import { WinePriceInfo } from "../features/wines/components/WinePriceInfo";
 import { WineStockSummary } from "../features/wines/components/WineStockSummary";
+import {
+  WineTransactionDialog,
+  type MovableTransactionType,
+} from "../features/wines/components/WineTransactionDialog";
 import { useDeleteWine, useWine } from "../features/wines/hooks/useWines";
 import { designTokens } from "../theme/theme";
 
@@ -30,6 +34,11 @@ export function WineDetailPage() {
   const navigate = useNavigate();
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+
+  const [transactionDialog, setTransactionDialog] = useState<{
+    open: boolean;
+    type: MovableTransactionType;
+  }>({ open: false, type: "in" });
 
   const numericWineId = Number(wineId);
 
@@ -129,16 +138,30 @@ export function WineDetailPage() {
             削除
           </Button>
 
-          <Button variant="contained" disabled>
+          <Button
+            variant="contained"
+            onClick={() =>
+              setTransactionDialog({ open: true, type: "in" })
+            }
+          >
             入出庫登録
           </Button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-        <WineImageCard imageUrl={wine.image_url} alt={wine.name} />
+      <div
+        className={`grid grid-cols-1 gap-6 ${
+          wine.image_url ? "md:grid-cols-3" : "md:grid-cols-2"
+        }`}
+      >
+        {wine.image_url && (
+          <WineImageCard imageUrl={wine.image_url} alt={wine.name} />
+        )}
         <WineInfoCard wine={wine} />
-        <WineStockSummary wine={wine} />
+        <WineStockSummary
+          wine={wine}
+          onAction={(type) => setTransactionDialog({ open: true, type })}
+        />
       </div>
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
@@ -148,6 +171,15 @@ export function WineDetailPage() {
       </div>
 
       <WineHistoryTable transactions={wine.recent_transactions} />
+
+      <WineTransactionDialog
+        open={transactionDialog.open}
+        onClose={() =>
+          setTransactionDialog((current) => ({ ...current, open: false }))
+        }
+        wine={wine}
+        initialType={transactionDialog.type}
+      />
 
       <Dialog
         open={deleteDialogOpen}

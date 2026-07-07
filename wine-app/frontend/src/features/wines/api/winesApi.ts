@@ -1,6 +1,7 @@
 import { apiClient } from "../../../lib/apiClient";
 
 import type {
+  InventoryTransactionCreateInput,
   Wine,
   WineCreateInput,
   WineListResponse,
@@ -74,6 +75,20 @@ export async function updateWine(
     `/api/wines/${wineId}`,
     {
       method: "PATCH",
+      body: data,
+    },
+  );
+}
+
+
+export async function createWineTransaction(
+  wineId: number,
+  data: InventoryTransactionCreateInput,
+): Promise<Wine> {
+  return apiClient<Wine>(
+    `/api/wines/${wineId}/transactions`,
+    {
+      method: "POST",
       body: data,
     },
   );

@@ -53,6 +53,16 @@ export type Wine = {
   };
 
 
+  export type InventoryTransactionCreateInput = {
+    transaction_type: TransactionType;
+    quantity: number;
+    from_location?: string | null;
+    to_location?: string | null;
+    note?: string | null;
+    operated_by?: string | null;
+  };
+
+
   export type WineListResponse = {
     total: number;
     skip: number;
@@ -123,6 +133,7 @@ export type Wine = {
   
     location?: string | null;
     management_code?: string | null;
+    reserved_quantity?: number;
     image_url?: string | null;
     comment?: string | null;
 

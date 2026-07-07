@@ -143,6 +143,26 @@ class WineUpdate(BaseModel):
         return self
 
 
+class InventoryTransactionCreate(BaseModel):
+    transaction_type: TransactionType
+    quantity: int = Field(gt=0)
+    from_location: str | None = None
+    to_location: str | None = None
+    note: str | None = None
+    operated_by: str | None = None
+
+    @model_validator(mode="after")
+    def validate_locations(self):
+        """
+        moveは在庫の保管場所を切り替える操作なので、移動先が必須。
+        """
+
+        if self.transaction_type == "move" and not self.to_location:
+            raise ValueError("移動には移動先の保管場所を指定してください。")
+
+        return self
+
+
 class InventoryTransactionResponse(BaseModel):
     id: int
     transaction_type: TransactionType
