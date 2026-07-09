@@ -61,6 +61,7 @@
    - 現状のSQLiteはCloud Run上では非永続(デモ/ローカル用)
    - コスト削減目的で **Vercel + Supabase** への移行を検討中(まだ着手前、規模の大きい別タスクとして扱う想定)
    - 画像アップロード先もSupabase Storageを前提に据える方針に変更済み(上記「要修正」参照。以前の「特定クラウドに依存しない=画像URLを素朴に保持する」方針からの転換)
+   - **手順は `MIGRATION_VERCEL_SUPABASE.md` にまとめ済み(2026-07-09)**。バックエンド(FastAPI)はCloud Run継続、移行対象はDB(SQLite→Supabase Postgres)とフロントエンドホスティング(Cloud Run→Vercel)のみと決定済み
 
 7. **マイグレーションツールの導入(Alembic等)**
    - 現状は `Base.metadata.create_all()` のみで、既存テーブルへの列追加は手動 `ALTER TABLE` が必要
@@ -70,3 +71,4 @@
 
 - `CLAUDE.md` — プロジェクト全体の実装方針・技術スタック・現在の優先度
 - `frontend/DESIGN.md` — デザインシステム(カラー・タイポグラフィ・コンポーネント方針)
+- `MIGRATION_VERCEL_SUPABASE.md` — Vercel + Supabase移行の詳細手順
