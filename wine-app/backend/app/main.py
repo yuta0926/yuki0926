@@ -3,12 +3,9 @@ import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app import models
-from app.database import Base, engine
+from app.database import engine
 from app.routers import wines
 
-
-Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="Wine Stocker API",
@@ -59,5 +56,5 @@ def health_check():
 def health():
     return {
         "status": "ok",
-        "database": "sqlite",
+        "database": engine.dialect.name,
     }

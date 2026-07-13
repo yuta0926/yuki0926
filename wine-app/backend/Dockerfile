@@ -12,8 +12,7 @@ RUN pip install \
     -r requirements.txt
 
 COPY app ./app
-
-# デモ用SQLiteにサンプルデータを含める場合
-COPY wine.db ./wine.db
+COPY migrations ./migrations
+COPY alembic.ini ./alembic.ini
 
 CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8080}"]

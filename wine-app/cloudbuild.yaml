@@ -2,12 +2,16 @@ substitutions:
   _REGION: asia-northeast1
   _REPOSITORY: wine-app
   _BACKEND_SERVICE: wine-api
-  _FRONTEND_SERVICE: wine-web
+  # Vercelプロジェクト作成後、実際のProduction URLに置き換えること。
+  # カスタムドメインは使わない方針のため、Vercelが発行するデフォルトドメインを想定。
+  _VERCEL_FRONTEND_URL: https://wine-web.vercel.app
 
 steps:
   # -------------------------------------
   # Backend
   # -------------------------------------
+  # フロントエンドはVercelのGit連携でデプロイされるため、このパイプラインは
+  # バックエンド(Cloud Run)のみを対象とする。
 
   - id: build-backend
     name: gcr.io/cloud-builders/docker
@@ -37,143 +41,11 @@ steps:
       - --allow-unauthenticated
       - --service-account=wine-cloud-run@$PROJECT_ID.iam.gserviceaccount.com
       - --max-instances=1
-      # フロントの決定的URLはデプロイ前でも計算可能
-      - --set-env-vars=CORS_ORIGINS=https://${_FRONTEND_SERVICE}-$PROJECT_NUMBER.${_REGION}.run.app
+      - --set-env-vars=CORS_ORIGINS=${_VERCEL_FRONTEND_URL}
+      # SupabaseのPostgres接続文字列。GCP Secret Managerに事前に
+      # `wine-db-url` という名前でシークレットを作成しておくこと。
+      - --set-secrets=DATABASE_URL=wine-db-url:latest
       - --quiet
-
-  - id: get-backend-url
-    name: gcr.io/google.com/cloudsdktool/cloud-sdk
-    entrypoint: bash
-    args:
-      - -c
-      - |
-        # Cloud Runのstatus.url
-        gcloud run services describe "${_BACKEND_SERVICE}" \
-          --project="$PROJECT_ID" \
-          --region="${_REGION}" \
-          --format="value(status.url)" \
-          > /workspace/backend-url.txt
-
-        # 決定的URL
-        echo -n \
-          "https://${_BACKEND_SERVICE}-$PROJECT_NUMBER.${_REGION}.run.app" \
-          > /workspace/backend-deterministic-url.txt
-
-        echo "Backend status URL:"
-        cat /workspace/backend-url.txt
-        echo
-
-        echo "Backend deterministic URL:"
-        cat /workspace/backend-deterministic-url.txt
-        echo
-
-  # -------------------------------------
-  # Frontend
-  # -------------------------------------
-
-  - id: build-frontend
-    name: gcr.io/cloud-builders/docker
-    entrypoint: bash
-    args:
-      - -c
-      - |
-        # フロントにはバックエンドの決定的URLを埋め込む
-        docker build \
-          --build-arg \
-          "VITE_API_BASE_URL=$$(cat /workspace/backend-deterministic-url.txt)" \
-          -t \
-          "${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_FRONTEND_SERVICE}:$BUILD_ID" \
-          ./wine-app/frontend
-
-  - id: push-frontend
-    name: gcr.io/cloud-builders/docker
-    args:
-      - push
-      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_FRONTEND_SERVICE}:$BUILD_ID
-
-  - id: deploy-frontend
-    name: gcr.io/google.com/cloudsdktool/cloud-sdk
-    entrypoint: gcloud
-    args:
-      - run
-      - deploy
-      - ${_FRONTEND_SERVICE}
-      - --project=$PROJECT_ID
-      - --image=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_FRONTEND_SERVICE}:$BUILD_ID
-      - --region=${_REGION}
-      - --platform=managed
-      - --allow-unauthenticated
-      - --service-account=wine-cloud-run@$PROJECT_ID.iam.gserviceaccount.com
-      - --max-instances=1
-      - --quiet
-
-  - id: get-frontend-url
-    name: gcr.io/google.com/cloudsdktool/cloud-sdk
-    entrypoint: bash
-    args:
-      - -c
-      - |
-        # Cloud Runのstatus.url
-        gcloud run services describe "${_FRONTEND_SERVICE}" \
-          --project="$PROJECT_ID" \
-          --region="${_REGION}" \
-          --format="value(status.url)" \
-          > /workspace/frontend-url.txt
-
-        # 決定的URL
-        echo -n \
-          "https://${_FRONTEND_SERVICE}-$PROJECT_NUMBER.${_REGION}.run.app" \
-          > /workspace/frontend-deterministic-url.txt
-
-        echo "Frontend status URL:"
-        cat /workspace/frontend-url.txt
-        echo
-
-        echo "Frontend deterministic URL:"
-        cat /workspace/frontend-deterministic-url.txt
-        echo
-
-  # -------------------------------------
-  # Backend CORS
-  # -------------------------------------
-
-  - id: update-backend-cors
-    name: gcr.io/google.com/cloudsdktool/cloud-sdk
-    entrypoint: bash
-    args:
-      - -c
-      - |
-        FRONTEND_STATUS_URL="$$(cat /workspace/frontend-url.txt)"
-        FRONTEND_DETERMINISTIC_URL="$$(cat /workspace/frontend-deterministic-url.txt)"
-
-        CORS_ORIGINS="$${FRONTEND_STATUS_URL},$${FRONTEND_DETERMINISTIC_URL}"
-
-        echo "Updating backend CORS:"
-        echo "$${CORS_ORIGINS}"
-
-        gcloud run services update "${_BACKEND_SERVICE}" \
-          --project="$PROJECT_ID" \
-          --region="${_REGION}" \
-          --update-env-vars="^@^CORS_ORIGINS=$${CORS_ORIGINS}" \
-          --quiet
-
-        echo "Deployment completed."
-
-        echo "Backend status URL:"
-        cat /workspace/backend-url.txt
-        echo
-
-        echo "Backend deterministic URL:"
-        cat /workspace/backend-deterministic-url.txt
-        echo
-
-        echo "Frontend status URL:"
-        cat /workspace/frontend-url.txt
-        echo
-
-        echo "Frontend deterministic URL:"
-        cat /workspace/frontend-deterministic-url.txt
-        echo
 
 options:
   logging: CLOUD_LOGGING_ONLY

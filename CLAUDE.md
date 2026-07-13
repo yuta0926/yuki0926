@@ -172,6 +172,15 @@ pip install -r requirements.txt
 python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
+Schema is managed by Alembic. `backend/wine.db` already has the schema applied, so existing clones need no action. On a fresh clone or after deleting `wine.db`, run once before starting uvicorn:
+
+```bash
+cd backend
+alembic upgrade head
+```
+
+`DATABASE_URL` is unset by default, so both uvicorn and Alembic target the local SQLite file. Set `DATABASE_URL` (e.g. to a Supabase Postgres connection string) only when you intentionally want to point local development at a remote database.
+
 Local backend checks:
 
 ```text
