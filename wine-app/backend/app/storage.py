@@ -99,8 +99,9 @@ def delete_image(url: str) -> None:
     object_path = url[len(prefix) :]
 
     try:
-        response = httpx.post(
-            f"{_supabase_url()}/storage/v1/object/remove/{_bucket()}",
+        response = httpx.request(
+            "DELETE",
+            f"{_supabase_url()}/storage/v1/object/{_bucket()}",
             json={"prefixes": [object_path]},
             headers={
                 "Authorization": f"Bearer {_service_role_key()}",
