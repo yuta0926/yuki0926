@@ -143,3 +143,8 @@ export type Wine = {
   
   export type WineUpdateInput =
     Partial<WineCreateInput>;
+
+
+  export type ImageUploadResponse = {
+    url: string;
+  };

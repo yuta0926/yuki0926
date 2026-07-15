@@ -195,6 +195,10 @@ class WineResponse(WineBase):
         return self.quantity - (self.reserved_quantity or 0)
 
 
+class ImageUploadResponse(BaseModel):
+    url: str
+
+
 class WineListResponse(BaseModel):
     """
     ワイン一覧APIのレスポンス。

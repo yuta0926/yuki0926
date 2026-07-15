@@ -55,6 +55,8 @@ export async function apiClient<T>(
 ): Promise<T> {
   const { body, headers, ...requestOptions } = options;
 
+  const isFormData = body instanceof FormData;
+
   const response = await fetch(
     `${env.apiBaseUrl}${path}`,
     {
@@ -63,7 +65,7 @@ export async function apiClient<T>(
       headers: {
         Accept: "application/json",
 
-        ...(body !== undefined
+        ...(body !== undefined && !isFormData
           ? { "Content-Type": "application/json" }
           : {}),
 
@@ -71,9 +73,11 @@ export async function apiClient<T>(
       },
 
       body:
-        body !== undefined
-          ? JSON.stringify(body)
-          : undefined,
+        body === undefined
+          ? undefined
+          : body instanceof FormData
+            ? body
+            : JSON.stringify(body),
     },
   );
 

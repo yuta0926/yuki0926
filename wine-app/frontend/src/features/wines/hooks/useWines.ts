@@ -11,6 +11,7 @@ import {
   getWine,
   getWines,
   updateWine,
+  uploadWineImage,
 } from "../api/winesApi";
 
 import type {
@@ -120,6 +121,13 @@ export function useCreateWineTransaction(
         queryKey: wineQueryKeys.lists(),
       });
     },
+  });
+}
+
+export function useUploadWineImage() {
+  return useMutation({
+    mutationFn: (file: File) =>
+      uploadWineImage(file),
   });
 }
 

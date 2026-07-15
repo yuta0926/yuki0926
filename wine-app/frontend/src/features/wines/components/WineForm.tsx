@@ -1,7 +1,12 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import {
+  CloudUploadOutlined,
+  DeleteOutlineOutlined,
+} from "@mui/icons-material";
+import {
   Button,
+  CircularProgress,
   FormControl,
   InputAdornment,
   InputLabel,
@@ -12,7 +17,13 @@ import {
   Typography,
 } from "@mui/material";
 
+import { WineImage } from "../../../components/common/WineImage";
+import { useUploadWineImage } from "../hooks/useWines";
 import type { Wine, WineCreateInput } from "../types/wine";
+
+
+const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
+const MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024;
 
 
 type WineFormValues = {
@@ -208,6 +219,63 @@ export function WineForm({
   );
 
   const [errors, setErrors] = useState<FormErrors>({});
+
+  const [imageUploadError, setImageUploadError] = useState<string | null>(
+    null,
+  );
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const uploadImageMutation = useUploadWineImage();
+
+  function handleImageButtonClick() {
+    fileInputRef.current?.click();
+  }
+
+  function handleImageFileChange(
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+
+    if (!file) {
+      return;
+    }
+
+    if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
+      setImageUploadError(
+        "対応していない画像形式です(jpeg/png/webpのみ)。",
+      );
+      return;
+    }
+
+    if (file.size > MAX_IMAGE_SIZE_BYTES) {
+      setImageUploadError("画像サイズが上限(5MB)を超えています。");
+      return;
+    }
+
+    setImageUploadError(null);
+
+    uploadImageMutation.mutate(file, {
+      onSuccess: (data) => {
+        setValues((current) => ({
+          ...current,
+          image_url: data.url,
+        }));
+      },
+      onError: (error) => {
+        setImageUploadError(
+          error.message || "画像のアップロードに失敗しました。",
+        );
+      },
+    });
+  }
+
+  function handleImageRemove() {
+    setValues((current) => ({
+      ...current,
+      image_url: "",
+    }));
+    setImageUploadError(null);
+  }
 
   function handleChange(
     field: keyof WineFormValues,
@@ -465,12 +533,71 @@ export function WineForm({
         </Typography>
 
         <div className="flex flex-col gap-4">
-          <TextField
-            label="画像URL"
-            value={values.image_url}
-            onChange={handleChange("image_url")}
-            fullWidth
-          />
+          <div className="flex flex-col gap-2">
+            <Typography variant="body2" sx={{ color: "text.secondary" }}>
+              画像
+            </Typography>
+
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
+              <WineImage
+                imageUrl={values.image_url || null}
+                alt={values.name || "ワイン画像"}
+                className="flex h-40 w-40 shrink-0 items-center justify-center rounded-lg border border-neutral-200"
+              />
+
+              <div className="flex flex-col gap-2">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept={ACCEPTED_IMAGE_TYPES.join(",")}
+                  onChange={handleImageFileChange}
+                  className="hidden"
+                  aria-label="画像を選択"
+                />
+
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="outlined"
+                    onClick={handleImageButtonClick}
+                    disabled={uploadImageMutation.isPending}
+                    startIcon={
+                      uploadImageMutation.isPending ? (
+                        <CircularProgress size={16} />
+                      ) : (
+                        <CloudUploadOutlined />
+                      )
+                    }
+                  >
+                    {values.image_url ? "画像を変更" : "画像を選択"}
+                  </Button>
+
+                  {values.image_url && (
+                    <Button
+                      type="button"
+                      variant="text"
+                      color="error"
+                      onClick={handleImageRemove}
+                      disabled={uploadImageMutation.isPending}
+                      startIcon={<DeleteOutlineOutlined />}
+                    >
+                      画像を削除
+                    </Button>
+                  )}
+                </div>
+
+                {imageUploadError && (
+                  <Typography
+                    variant="body2"
+                    role="alert"
+                    sx={{ color: "error.main" }}
+                  >
+                    {imageUploadError}
+                  </Typography>
+                )}
+              </div>
+            </div>
+          </div>
 
           <TextField
             label="コメント・メモ"

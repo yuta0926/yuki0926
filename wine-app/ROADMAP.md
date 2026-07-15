@@ -21,54 +21,45 @@
   - DB: SQLite → Supabase Postgres、Alembic導入
   - フロントエンドホスティング: Cloud Run → Vercel(`https://yuki0926.vercel.app`)
   - バックエンドはCloud Run継続(`wine-api`)
+- **画像アップロード機能(Supabase Storage連携)**(2026-07-15 完了)
+  - `WineForm`の画像欄を「URL手入力」から「ファイル選択→アップロード」に置き換え
+  - バックエンド経由でSupabase Storageに中継する方式(`POST /api/images`、`app/storage.py`)を採用。service role keyはCloud RunのSecret Manager経由でのみ注入し、フロントには一切露出しない
+  - ワイン更新・削除時に、差し替え/削除された古い画像をベストエフォートでStorageから削除(孤児ファイル防止)
+  - Supabase未設定環境(ローカル/Codespacesで環境変数未設定時)では503を返し、その他の機能には影響しない
+  - 複数画像対応は引き続き未着手(下記「中期」3番)
 
 未着手・スタブのまま:
-- 画像アップロード機能(下記の要修正事項を参照)
 - 「すべての履歴を見る」導線
-
-## ⚠️ 要修正: 画像URL入力 → 画像アップロードへの切り替え
-
-`WineForm`(新規登録・編集共通)の画像欄は、現状「画像URLをテキストで手入力する」実装になっている。これは暫定実装であり、本来は以下に修正が必要:
-
-- ユーザーが画像ファイルをアップロードし、アップロード先のパス/URLを `wines.image_url` に書き込む形にする
-- もともとはGCSへのアップロードを想定していたが、ホスティングを Cloud Run から **Vercel + Supabase** へ移行する方向で検討中のため、アップロード先は **Supabase Storage** を前提に設計し直したい(下記「長期・インフラ」の6番と関連)
-- Supabase移行自体はまだ着手前の別タスクなので、着手する際は以下を先に整理する:
-  - Supabase Storageのバケット設計・アクセス制御(認証なしの現状の運用と整合させる)
-  - アップロードAPI(バックエンド経由でSupabaseに中継するか、フロントから直接Supabase SDKで上げるか)
-  - ローカル/Codespaces開発時の代替手段(Supabase未接続でも動作確認できるようにするか等)
-  - 複数画像対応(下記「中期」の3番、`wine_images`テーブルへの分離)と合わせて設計するとやり直しが少ない
 
 ## 次にやること(短期)
 
-1. **画像アップロード対応への切り替え**(上記「要修正」参照)
-
-2. **「すべての履歴を見る」導線**
+1. **「すべての履歴を見る」導線**
    - 詳細画面の履歴テーブルは直近10件のみ表示中
    - 案B(`GET /api/wines/{id}/transactions` の独立エンドポイント + ページング)で全履歴閲覧ページを追加
 
 ## 中期
 
-3. **複数画像対応**
+2. **複数画像対応**
    - `wines.image_url`(単一画像)から `wine_images` テーブルへ分離
    - `WineImageCard` → `WineImageGallery` への拡張
-   - 上記の画像アップロード対応と合わせて設計するとやり直しが少ない
+   - 画像アップロード機能(上記「完了」参照)は既に実装済みなので、この分離は既存のアップロードAPIをそのまま複数回呼び出す形で拡張できる想定
 
-4. **AI確認ステータスの運用フロー整備**
+3. **AI確認ステータスの運用フロー整備**
    - 現状は表示のみ(確認済み/未確認/要確認/要修正のバッジ化は完了)
    - 誰が・いつ・どう更新するかの運用/UIが未定義
 
-5. **Excelインポート**(CLAUDE.md記載の将来項目)
+4. **Excelインポート**(CLAUDE.md記載の将来項目)
 
 ## 長期・インフラ
 
-6. **データベース・ホスティング基盤の見直し(Vercel + Supabase移行)— ✅完了(2026-07-15)**
+5. **データベース・ホスティング基盤の見直し(Vercel + Supabase移行)— ✅完了(2026-07-15)**
    - DB: SQLite(Cloud Run上で非永続)→ **Supabase Postgres**(Transaction pooler接続、`ap-northeast-1`)
    - フロントエンドホスティング: Cloud Run + nginx → **Vercel**(Git連携自動デプロイ、`https://yuki0926.vercel.app`)
    - バックエンド(FastAPI)はCloud Run継続(`wine-api`)、変更なし
-   - 画像アップロード先をSupabase Storageに据える方針は維持(下記「要修正」参照。今回のインフラ移行そのものとは別タスク)
+   - 画像アップロード先はSupabase Storage(上記「完了」参照。実装は本インフラ移行とは別タスクとして2026-07-15に完了)
    - 実施記録・手順は `MIGRATION_VERCEL_SUPABASE.md` を参照
 
-7. **マイグレーションツールの導入(Alembic等)— ✅完了(2026-07-15、6番と同時実施)**
+6. **マイグレーションツールの導入(Alembic等)— ✅完了(2026-07-15、5番と同時実施)**
    - `backend/migrations/` にAlembicを導入済み。`Base.metadata.create_all()` は`main.py`から削除し、以後のスキーマ変更は全てAlembicのリビジョンで管理する
    - ローカル新規クローン時は`alembic upgrade head`が必要(`CLAUDE.md`のLocal Backend節に記載)
 

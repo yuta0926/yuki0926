@@ -11,6 +11,7 @@ from fastapi import (
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
+from app import storage
 from app.database import get_db
 from app.models import InventoryTransaction, Wine
 from app.schemas import (
@@ -523,6 +524,8 @@ def update_wine(
                 detail="変更後の内容と同じワインが既に登録されています。",
             )
 
+    previous_image_url = wine.image_url
+
     for field_name, value in update_data.items():
         setattr(
             wine,
@@ -532,6 +535,14 @@ def update_wine(
 
     db.commit()
     db.refresh(wine)
+
+    # 画像が差し替え・削除された場合、古い画像をベストエフォートで削除する
+    if (
+        "image_url" in update_data
+        and previous_image_url
+        and previous_image_url != wine.image_url
+    ):
+        storage.delete_image(previous_image_url)
 
     return wine
 
@@ -631,8 +642,13 @@ def delete_wine(
             detail="指定されたワインが見つかりません。",
         )
 
+    image_url = wine.image_url
+
     db.delete(wine)
     db.commit()
+
+    if image_url:
+        storage.delete_image(image_url)
 
     return Response(
         status_code=status.HTTP_204_NO_CONTENT,

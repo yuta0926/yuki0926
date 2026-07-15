@@ -1,6 +1,7 @@
 import { apiClient } from "../../../lib/apiClient";
 
 import type {
+  ImageUploadResponse,
   InventoryTransactionCreateInput,
   Wine,
   WineCreateInput,
@@ -90,6 +91,22 @@ export async function createWineTransaction(
     {
       method: "POST",
       body: data,
+    },
+  );
+}
+
+
+export async function uploadWineImage(
+  file: File,
+): Promise<ImageUploadResponse> {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  return apiClient<ImageUploadResponse>(
+    "/api/images",
+    {
+      method: "POST",
+      body: formData,
     },
   );
 }

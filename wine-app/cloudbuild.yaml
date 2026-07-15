@@ -4,6 +4,8 @@ substitutions:
   _BACKEND_SERVICE: wine-api
   # Vercelが発行したProduction URL(カスタムドメインは使わない方針)。
   _VERCEL_FRONTEND_URL: https://yuki0926.vercel.app
+  # 画像アップロード先のSupabaseプロジェクトURL(公開情報、Secret化不要)。
+  _SUPABASE_URL: https://lmsglqjgvqshzdohyonw.supabase.co
 
 steps:
   # -------------------------------------
@@ -40,10 +42,13 @@ steps:
       - --allow-unauthenticated
       - --service-account=wine-cloud-run@$PROJECT_ID.iam.gserviceaccount.com
       - --max-instances=1
-      - --set-env-vars=CORS_ORIGINS=${_VERCEL_FRONTEND_URL}
+      - --set-env-vars=CORS_ORIGINS=${_VERCEL_FRONTEND_URL},SUPABASE_URL=${_SUPABASE_URL}
       # SupabaseのPostgres接続文字列。GCP Secret Managerに事前に
       # `wine-db-url` という名前でシークレットを作成しておくこと。
-      - --set-secrets=DATABASE_URL=wine-db-url:latest
+      # 画像アップロード(Supabase Storage)用のservice roleキー。
+      # 同様にGCP Secret Managerに `wine-supabase-service-role-key`
+      # という名前でシークレットを作成しておくこと。
+      - --set-secrets=DATABASE_URL=wine-db-url:latest,SUPABASE_SERVICE_ROLE_KEY=wine-supabase-service-role-key:latest
       - --quiet
 
 options:
