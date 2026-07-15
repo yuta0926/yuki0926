@@ -2,9 +2,8 @@ substitutions:
   _REGION: asia-northeast1
   _REPOSITORY: wine-app
   _BACKEND_SERVICE: wine-api
-  # Vercelプロジェクト作成後、実際のProduction URLに置き換えること。
-  # カスタムドメインは使わない方針のため、Vercelが発行するデフォルトドメインを想定。
-  _VERCEL_FRONTEND_URL: https://wine-web.vercel.app
+  # Vercelが発行したProduction URL(カスタムドメインは使わない方針)。
+  _VERCEL_FRONTEND_URL: https://yuki0926.vercel.app
 
 steps:
   # -------------------------------------
