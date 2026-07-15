@@ -84,7 +84,8 @@ If the actual repository differs from this structure, inspect the current files 
 
 - FastAPI
 - SQLAlchemy 2.x
-- SQLite for current demo/local development
+- Supabase Postgres in production; SQLite fallback for local development (`DATABASE_URL` unset)
+- Alembic for schema migrations
 - Uvicorn for local development
 - Cloud Run for deployment
 
@@ -100,13 +101,10 @@ If the actual repository differs from this structure, inspect the current files 
 
 ### Deployment
 
-- GitHub main branch push triggers Cloud Build
-- Artifact Registry stores container images
-- Cloud Run services:
-  - backend: `wine-api`
-  - frontend: `wine-web`
-- Region: `asia-northeast1`
-- GCP project: `billing-app-20240401`
+- **Backend**: GitHub main branch push triggers Cloud Build (`wine-app/cloudbuild.yaml`) → Artifact Registry → Cloud Run service `wine-api`, region `asia-northeast1`, GCP project `billing-app-20240401`. `DATABASE_URL` is injected from Secret Manager secret `wine-db-url` (Supabase Postgres, Transaction pooler connection string).
+- **Frontend**: Vercel, Git-integrated auto-deploy on push to main. Root Directory `wine-app/frontend`. Production URL: `https://yuki0926.vercel.app`. Env var `VITE_API_BASE_URL` is set in the Vercel project settings (not build-time injected via Cloud Build like before). `frontend/vercel.json` provides the SPA rewrite fallback needed for client-side routes (React Router) to resolve on direct navigation/refresh.
+- The old Cloud Run frontend service (`wine-web`) has been retired; do not reference it as a live deployment target.
+- Migrated from Cloud Run+SQLite to this Vercel+Supabase setup on 2026-07-14/15; see `wine-app/MIGRATION_VERCEL_SUPABASE.md` for the full migration record.
 
 ## Development Environments
 
@@ -327,7 +325,7 @@ FastAPI should allow the forwarded frontend origin. For Codespaces development, 
 allow_origin_regex=r"https://.*-5173\.app\.github\.dev"
 ```
 
-For production, do not rely on broad development regexes. Use concrete Cloud Run frontend URLs through `CORS_ORIGINS`.
+For production, do not rely on broad development regexes. Use the concrete Vercel production URL through `CORS_ORIGINS`.
 
 ## Environment Variables Summary
 
@@ -365,7 +363,7 @@ https://.*-5173.app.github.dev
 Production origins:
 
 ```text
-Cloud Run frontend service URLs only
+Vercel production URL only (https://yuki0926.vercel.app)
 ```
 
 ## Backend Implementation Guidelines
@@ -448,9 +446,7 @@ Return HTTP 409 when a duplicate is detected.
 
 ### Database Note
 
-SQLite inside Cloud Run is ephemeral and not suitable for production data persistence. Treat the current SQLite setup as demo/local development only.
-
-A future production-ready migration should use Cloud SQL PostgreSQL or another persistent database.
+Production uses Supabase Postgres (`DATABASE_URL` set via Secret Manager on Cloud Run). SQLite is local-development-only now, used when `DATABASE_URL` is unset. Schema changes go through Alembic (`backend/migrations/`) — do not rely on `Base.metadata.create_all()`, which was removed from `main.py`.
 
 ## Frontend Implementation Guidelines
 
@@ -890,4 +886,4 @@ Do not:
 3. Implement wine detail screen in the same design system.
 4. Implement create/edit flows with validation.
 5. Add delete confirmation and user feedback.
-6. Later: stock movement history, image upload, Cloud SQL migration, Excel import.
+6. Later: stock movement history, image upload (Supabase Storage), Excel import.

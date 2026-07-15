@@ -1,6 +1,6 @@
 # Wine Stocker 実装ロードマップ / To Do
 
-最終更新: 2026-07-07
+最終更新: 2026-07-15
 
 このドキュメントは、今後の実装計画とTo Doを整理したものです。開発方針全般は `CLAUDE.md` を参照してください。(`design-update.md` は削除済み)
 
@@ -17,6 +17,10 @@
 - **ワイン新規登録・編集フォーム**(2026-07-07 完了)
   - `WineForm` を作成・編集共通で実装し、`management_code`/`reserved_quantity` を含む全フィールドに対応
   - 重複チェック(name+producer+vintage+size+location)の409エラーをフォーム側で表示
+- **Vercel + Supabase移行**(2026-07-15 完了。詳細は下記「長期・インフラ」6番と`MIGRATION_VERCEL_SUPABASE.md`)
+  - DB: SQLite → Supabase Postgres、Alembic導入
+  - フロントエンドホスティング: Cloud Run → Vercel(`https://yuki0926.vercel.app`)
+  - バックエンドはCloud Run継続(`wine-api`)
 
 未着手・スタブのまま:
 - 画像アップロード機能(下記の要修正事項を参照)
@@ -57,15 +61,16 @@
 
 ## 長期・インフラ
 
-6. **データベース・ホスティング基盤の見直し(Vercel + Supabase移行)**
-   - 現状のSQLiteはCloud Run上では非永続(デモ/ローカル用)
-   - コスト削減目的で **Vercel + Supabase** への移行を検討中(まだ着手前、規模の大きい別タスクとして扱う想定)
-   - 画像アップロード先もSupabase Storageを前提に据える方針に変更済み(上記「要修正」参照。以前の「特定クラウドに依存しない=画像URLを素朴に保持する」方針からの転換)
-   - **手順は `MIGRATION_VERCEL_SUPABASE.md` にまとめ済み(2026-07-09)**。バックエンド(FastAPI)はCloud Run継続、移行対象はDB(SQLite→Supabase Postgres)とフロントエンドホスティング(Cloud Run→Vercel)のみと決定済み
+6. **データベース・ホスティング基盤の見直し(Vercel + Supabase移行)— ✅完了(2026-07-15)**
+   - DB: SQLite(Cloud Run上で非永続)→ **Supabase Postgres**(Transaction pooler接続、`ap-northeast-1`)
+   - フロントエンドホスティング: Cloud Run + nginx → **Vercel**(Git連携自動デプロイ、`https://yuki0926.vercel.app`)
+   - バックエンド(FastAPI)はCloud Run継続(`wine-api`)、変更なし
+   - 画像アップロード先をSupabase Storageに据える方針は維持(下記「要修正」参照。今回のインフラ移行そのものとは別タスク)
+   - 実施記録・手順は `MIGRATION_VERCEL_SUPABASE.md` を参照
 
-7. **マイグレーションツールの導入(Alembic等)**
-   - 現状は `Base.metadata.create_all()` のみで、既存テーブルへの列追加は手動 `ALTER TABLE` が必要
-   - 今回の `management_code`/`reserved_quantity`/`inventory_transactions` 追加でも手動対応が発生しており、今後列追加のたびに同じ運用コストが発生する
+7. **マイグレーションツールの導入(Alembic等)— ✅完了(2026-07-15、6番と同時実施)**
+   - `backend/migrations/` にAlembicを導入済み。`Base.metadata.create_all()` は`main.py`から削除し、以後のスキーマ変更は全てAlembicのリビジョンで管理する
+   - ローカル新規クローン時は`alembic upgrade head`が必要(`CLAUDE.md`のLocal Backend節に記載)
 
 ## 参考ドキュメント
 
