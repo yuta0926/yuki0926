@@ -1,7 +1,11 @@
+import logging
 import os
 import uuid
 
 import httpx
+
+
+logger = logging.getLogger(__name__)
 
 
 CONTENT_TYPE_EXTENSIONS = {
@@ -75,17 +79,27 @@ def delete_image(url: str) -> None:
     """
 
     if not is_storage_configured():
+        logger.warning(
+            "Supabase Storage未設定のため画像削除をスキップしました: url=%s",
+            url,
+        )
         return
 
     prefix = _public_url_prefix()
 
     if not prefix or not url.startswith(prefix):
+        logger.warning(
+            "画像URLがバケットのプレフィックスと一致しないため削除をスキップしました: "
+            "url=%s prefix=%s",
+            url,
+            prefix,
+        )
         return
 
     object_path = url[len(prefix) :]
 
     try:
-        httpx.post(
+        response = httpx.post(
             f"{_supabase_url()}/storage/v1/object/remove/{_bucket()}",
             json={"prefixes": [object_path]},
             headers={
@@ -94,5 +108,22 @@ def delete_image(url: str) -> None:
             },
             timeout=30.0,
         )
+
+        if response.status_code >= 400:
+            logger.error(
+                "Supabase Storageからの画像削除に失敗しました: "
+                "status=%s body=%s object_path=%s",
+                response.status_code,
+                response.text,
+                object_path,
+            )
+        else:
+            logger.info(
+                "Supabase Storageから画像を削除しました: object_path=%s",
+                object_path,
+            )
     except httpx.HTTPError:
-        pass
+        logger.exception(
+            "Supabase Storageへの画像削除リクエストが失敗しました: object_path=%s",
+            object_path,
+        )
