@@ -23,7 +23,7 @@ export function WineCreatePage() {
 
     createWineMutation.mutate(data, {
       onSuccess: (wine) => {
-        navigate(`/wines/${wine.id}`);
+        navigate(`/admin/wines/${wine.id}`);
       },
 
       onError: (error) => {
@@ -39,7 +39,7 @@ export function WineCreatePage() {
   return (
     <div className="flex flex-col gap-6">
       <Link
-        to="/wines"
+        to="/admin/wines"
         className="flex w-fit items-center gap-1 text-sm text-app-text-secondary transition-colors hover:text-app-primary"
       >
         <ArrowBackOutlined fontSize="small" />
@@ -53,7 +53,7 @@ export function WineCreatePage() {
       <WineForm
         mode="create"
         onSubmit={handleSubmit}
-        onCancel={() => navigate("/wines")}
+        onCancel={() => navigate("/admin/wines")}
         isSubmitting={createWineMutation.isPending}
         submitErrorMessage={submitErrorMessage}
       />

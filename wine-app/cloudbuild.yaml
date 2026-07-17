@@ -48,6 +48,8 @@ steps:
       # 画像アップロード(Supabase Storage)用のservice roleキー。
       # 同様にGCP Secret Managerに `wine-supabase-service-role-key`
       # という名前でシークレットを作成しておくこと。
+      # 管理者認証(Supabase Auth)のJWT検証は、SUPABASE_URL配下のJWKS
+      # エンドポイント(公開鍵)を使って行うため、追加のシークレットは不要。
       - --set-secrets=DATABASE_URL=wine-db-url:latest,SUPABASE_SERVICE_ROLE_KEY=wine-supabase-service-role-key:latest
       - --quiet
 

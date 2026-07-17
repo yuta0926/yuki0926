@@ -3,30 +3,41 @@ from typing import Annotated, Literal
 from fastapi import (
     APIRouter,
     Depends,
+    File,
     HTTPException,
     Query,
     Response,
+    UploadFile,
     status,
 )
-from sqlalchemy import func, or_, select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app import storage
+from app.auth import get_current_admin
 from app.database import get_db
 from app.models import InventoryTransaction, Wine
 from app.schemas import (
     InventoryTransactionCreate,
     InventoryTransactionResponse,
     WineCreate,
+    WineImportError,
+    WineImportResult,
     WineListResponse,
     WineResponse,
     WineUpdate,
 )
+from app.wine_filters import build_common_wine_filters, validate_price_range
+from app.wine_import import parse_import_workbook
+
+
+MAX_IMPORT_FILE_SIZE_BYTES = 10 * 1024 * 1024
 
 
 router = APIRouter(
     prefix="/api/wines",
     tags=["wines"],
+    dependencies=[Depends(get_current_admin)],
 )
 
 
@@ -145,6 +156,97 @@ def create_wine(
     db.refresh(wine)
 
     return wine
+
+
+@router.post(
+    "/import",
+    response_model=WineImportResult,
+    status_code=status.HTTP_201_CREATED,
+)
+async def import_wines(
+    db: DbSession,
+    file: UploadFile = File(...),
+) -> WineImportResult:
+    """
+    Excel(WineListシート)からワインを一括登録する。
+
+    名前が空欄の行・値が不正な行・重複するワインの行はスキップし、
+    有効な行だけを登録する。スキップした行はerrorsに理由とともに返す。
+    """
+
+    content = await file.read()
+
+    if len(content) > MAX_IMPORT_FILE_SIZE_BYTES:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="ファイルサイズが上限(10MB)を超えています。",
+        )
+
+    try:
+        parsed_rows, errors = parse_import_workbook(content)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(exc),
+        )
+
+    seen_identities: set[
+        tuple[str, str | None, int | None, str | None, str | None]
+    ] = set()
+
+    created_count = 0
+
+    for row_number, wine_data in parsed_rows:
+        identity = (
+            wine_data.name,
+            wine_data.producer,
+            wine_data.vintage,
+            wine_data.size,
+            wine_data.location,
+        )
+
+        if identity in seen_identities:
+            errors.append(
+                WineImportError(
+                    row=row_number,
+                    message=(
+                        "ファイル内に同一のワイン"
+                        "(ワイン名・生産者・ヴィンテージ・サイズ・"
+                        "保管場所の組み合わせ)が複数あります。"
+                    ),
+                )
+            )
+            continue
+
+        duplicate_wine = find_duplicate_wine(
+            db,
+            name=wine_data.name,
+            producer=wine_data.producer,
+            vintage=wine_data.vintage,
+            size=wine_data.size,
+            location=wine_data.location,
+        )
+
+        if duplicate_wine is not None:
+            errors.append(
+                WineImportError(
+                    row=row_number,
+                    message="同じワインが既に登録されています。",
+                )
+            )
+            continue
+
+        seen_identities.add(identity)
+        db.add(Wine(**wine_data.model_dump()))
+        created_count += 1
+
+    db.commit()
+
+    return WineImportResult(
+        created_count=created_count,
+        skipped_count=len(errors),
+        errors=errors,
+    )
 
 
 @router.get(
@@ -286,100 +388,25 @@ def get_wines(
     ワイン一覧を検索する。
     """
 
-    if (
-        min_sale_price is not None
-        and max_sale_price is not None
-        and min_sale_price > max_sale_price
-    ):
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=(
-                "min_sale_priceは"
-                "max_sale_price以下にしてください。"
-            ),
-        )
+    validate_price_range(min_sale_price, max_sale_price)
 
-    filters = []
+    filters = build_common_wine_filters(
+        keyword=keyword,
+        wine_type=wine_type,
+        style_type=style_type,
+        country=country,
+        producer=producer,
+        grape_variety=grape_variety,
+        vintage=vintage,
+        min_sale_price=min_sale_price,
+        max_sale_price=max_sale_price,
+        in_stock=in_stock,
+    )
 
-    # キーワード検索
-    if keyword:
-        normalized_keyword = keyword.strip()
-
-        if normalized_keyword:
-            keyword_pattern = f"%{normalized_keyword}%"
-
-            filters.append(
-                or_(
-                    Wine.name.ilike(keyword_pattern),
-                    Wine.name_kana.ilike(keyword_pattern),
-                    Wine.producer.ilike(keyword_pattern),
-                    Wine.country.ilike(keyword_pattern),
-                    Wine.grape_variety.ilike(keyword_pattern),
-                    Wine.comment.ilike(keyword_pattern),
-                )
-            )
-
-    # 完全一致による絞り込み
-    if wine_type:
-        filters.append(
-            Wine.wine_type == wine_type,
-        )
-
-    if style_type:
-        filters.append(
-            Wine.style_type == style_type,
-        )
-
-    if country:
-        filters.append(
-            Wine.country == country,
-        )
-
-    if vintage is not None:
-        filters.append(
-            Wine.vintage == vintage,
-        )
-
+    # 保管場所による絞り込み(管理者向けのみ)
     if location:
         filters.append(
             Wine.location == location,
-        )
-
-    # 部分一致による絞り込み
-    if producer:
-        filters.append(
-            Wine.producer.ilike(
-                f"%{producer.strip()}%",
-            )
-        )
-
-    if grape_variety:
-        filters.append(
-            Wine.grape_variety.ilike(
-                f"%{grape_variety.strip()}%",
-            )
-        )
-
-    # 売価範囲
-    if min_sale_price is not None:
-        filters.append(
-            Wine.sale_price >= min_sale_price,
-        )
-
-    if max_sale_price is not None:
-        filters.append(
-            Wine.sale_price <= max_sale_price,
-        )
-
-    # 在庫有無
-    if in_stock is True:
-        filters.append(
-            Wine.quantity > 0,
-        )
-
-    elif in_stock is False:
-        filters.append(
-            Wine.quantity == 0,
         )
 
     # 総件数取得

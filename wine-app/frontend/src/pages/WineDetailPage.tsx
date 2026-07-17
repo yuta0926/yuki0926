@@ -54,7 +54,7 @@ export function WineDetailPage() {
   function handleDeleteConfirm() {
     deleteWineMutation.mutate(numericWineId, {
       onSuccess: () => {
-        navigate("/wines");
+        navigate("/admin/wines");
       },
     });
   }
@@ -85,7 +85,7 @@ export function WineDetailPage() {
   return (
     <div className="flex flex-col gap-6">
       <Link
-        to="/wines"
+        to="/admin/wines"
         className="flex w-fit items-center gap-1 text-sm text-app-text-secondary transition-colors hover:text-app-primary"
       >
         <ArrowBackOutlined fontSize="small" />
@@ -124,7 +124,7 @@ export function WineDetailPage() {
         <div className="flex flex-wrap gap-2">
           <Button
             component={Link}
-            to={`/wines/${wine.id}/edit`}
+            to={`/admin/wines/${wine.id}/edit`}
             variant="outlined"
           >
             編集

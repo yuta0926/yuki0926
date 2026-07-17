@@ -34,7 +34,7 @@ export function WineEditPage() {
 
     updateWineMutation.mutate(data, {
       onSuccess: (updatedWine) => {
-        navigate(`/wines/${updatedWine.id}`);
+        navigate(`/admin/wines/${updatedWine.id}`);
       },
 
       onError: (mutationError) => {
@@ -73,7 +73,7 @@ export function WineEditPage() {
   return (
     <div className="flex flex-col gap-6">
       <Link
-        to={`/wines/${wine.id}`}
+        to={`/admin/wines/${wine.id}`}
         className="flex w-fit items-center gap-1 text-sm text-app-text-secondary transition-colors hover:text-app-primary"
       >
         <ArrowBackOutlined fontSize="small" />
@@ -88,7 +88,7 @@ export function WineEditPage() {
         mode="edit"
         initialWine={wine}
         onSubmit={handleSubmit}
-        onCancel={() => navigate(`/wines/${wine.id}`)}
+        onCancel={() => navigate(`/admin/wines/${wine.id}`)}
         isSubmitting={updateWineMutation.isPending}
         submitErrorMessage={submitErrorMessage}
       />

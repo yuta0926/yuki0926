@@ -199,6 +199,23 @@ class ImageUploadResponse(BaseModel):
     url: str
 
 
+class WineImportError(BaseModel):
+    """
+    一括登録時にスキップされた行の情報。
+
+    rowはExcelシート上の行番号(ヘッダー行を1行目とする)。
+    """
+
+    row: int
+    message: str
+
+
+class WineImportResult(BaseModel):
+    created_count: int
+    skipped_count: int
+    errors: list[WineImportError]
+
+
 class WineListResponse(BaseModel):
     """
     ワイン一覧APIのレスポンス。
@@ -208,3 +225,52 @@ class WineListResponse(BaseModel):
     skip: int
     limit: int
     items: list[WineResponse]
+
+
+class WineCustomerResponse(BaseModel):
+    """
+    顧客向け(認証不要)のワインレスポンス。
+
+    仕入値(purchase_price)・在庫本数・保管場所・管理コード・コメントなど
+    社内向け情報は含めない。在庫は数量ではなく在庫有無のみ返す。
+    """
+
+    id: int
+
+    wine_type: str | None = None
+    style_type: str | None = None
+
+    name: str
+    name_kana: str | None = None
+
+    country: str | None = None
+    producer: str | None = None
+    grape_variety: str | None = None
+
+    vintage: int | None = None
+    size: str | None = None
+
+    sale_price: int | None = None
+    image_url: str | None = None
+
+    quantity: int = Field(exclude=True)
+
+    model_config = ConfigDict(
+        from_attributes=True,
+    )
+
+    @computed_field
+    @property
+    def in_stock(self) -> bool:
+        return self.quantity > 0
+
+
+class WineCustomerListResponse(BaseModel):
+    """
+    顧客向けワイン一覧APIのレスポンス。
+    """
+
+    total: int
+    skip: int
+    limit: int
+    items: list[WineCustomerResponse]

@@ -1,13 +1,15 @@
 import httpx
-from fastapi import APIRouter, File, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 
 from app import storage
+from app.auth import get_current_admin
 from app.schemas import ImageUploadResponse
 
 
 router = APIRouter(
     prefix="/api/images",
     tags=["images"],
+    dependencies=[Depends(get_current_admin)],
 )
 
 

@@ -148,3 +148,64 @@ export type Wine = {
   export type ImageUploadResponse = {
     url: string;
   };
+
+
+  export type WineCustomer = {
+    id: number;
+
+    wine_type: string | null;
+    style_type: string | null;
+
+    name: string;
+    name_kana: string | null;
+
+    country: string | null;
+    producer: string | null;
+    grape_variety: string | null;
+
+    vintage: number | null;
+    size: string | null;
+
+    sale_price: number | null;
+    image_url: string | null;
+
+    in_stock: boolean;
+  };
+
+
+  export type WineCustomerListResponse = {
+    total: number;
+    skip: number;
+    limit: number;
+    items: WineCustomer[];
+  };
+
+
+  export type WineCustomerSortField =
+    | "id"
+    | "name"
+    | "vintage"
+    | "sale_price";
+
+
+  export type WineCustomerSearchParams = {
+    keyword?: string;
+    wine_type?: string;
+    style_type?: string;
+    country?: string;
+    producer?: string;
+    grape_variety?: string;
+
+    vintage?: number;
+
+    min_sale_price?: number;
+    max_sale_price?: number;
+
+    in_stock?: boolean;
+
+    sort_by?: WineCustomerSortField;
+    sort_order?: SortOrder;
+
+    skip?: number;
+    limit?: number;
+  };

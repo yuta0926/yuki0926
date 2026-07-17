@@ -1,4 +1,5 @@
 import { env } from "../config/env";
+import { supabase } from "./supabaseClient";
 
 
 type FastApiErrorResponse = {
@@ -57,6 +58,10 @@ export async function apiClient<T>(
 
   const isFormData = body instanceof FormData;
 
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
   const response = await fetch(
     `${env.apiBaseUrl}${path}`,
     {
@@ -67,6 +72,10 @@ export async function apiClient<T>(
 
         ...(body !== undefined && !isFormData
           ? { "Content-Type": "application/json" }
+          : {}),
+
+        ...(session
+          ? { Authorization: `Bearer ${session.access_token}` }
           : {}),
 
         ...headers,

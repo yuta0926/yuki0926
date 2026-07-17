@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.database import engine
-from app.routers import images, wines
+from app.routers import images, public_wines, wines
 
 
 app = FastAPI(
@@ -44,6 +44,7 @@ app.add_middleware(
 
 app.include_router(wines.router)
 app.include_router(images.router)
+app.include_router(public_wines.router)
 
 
 @app.get("/")

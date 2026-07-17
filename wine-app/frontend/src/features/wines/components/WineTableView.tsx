@@ -106,7 +106,7 @@ export function WineTableView({
                 }}
               >
                 <Link
-                  to={`/wines/${wine.id}`}
+                  to={`/admin/wines/${wine.id}`}
                   className="font-medium text-app-text transition-colors hover:text-app-primary hover:underline"
                 >
                   {wine.name}

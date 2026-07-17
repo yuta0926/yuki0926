@@ -170,6 +170,20 @@ pip install -r requirements.txt
 python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
+All `/api/wines` and `/api/images` endpoints require a valid Supabase Auth admin JWT (see Authentication below). Set `SUPABASE_URL` before starting uvicorn, or every request will fail with `503`:
+
+```powershell
+$env:SUPABASE_URL = "https://lmsglqjgvqshzdohyonw.supabase.co"
+python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+```
+
+```cmd
+set SUPABASE_URL=https://lmsglqjgvqshzdohyonw.supabase.co
+python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+```
+
+`SUPABASE_URL` is public information (not a secret) and is the same value used for Supabase Storage image uploads.
+
 Schema is managed by Alembic. `backend/wine.db` already has the schema applied, so existing clones need no action. On a fresh clone or after deleting `wine.db`, run once before starting uvicorn:
 
 ```bash
@@ -215,9 +229,11 @@ Create `frontend/.env.local`.
 
 ```env
 VITE_API_BASE_URL=http://127.0.0.1:8000
+VITE_SUPABASE_URL=https://lmsglqjgvqshzdohyonw.supabase.co
+VITE_SUPABASE_ANON_KEY=<Supabase Project Settings > API > anon public key>
 ```
 
-Do not add a trailing slash.
+Do not add a trailing slash to `VITE_API_BASE_URL`.
 
 Good:
 
@@ -230,6 +246,8 @@ Bad:
 ```env
 VITE_API_BASE_URL=http://127.0.0.1:8000/
 ```
+
+`VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` are used only for the login screen (`supabase-js` `signInWithPassword`/session handling). All wine data access still goes through the FastAPI backend, never directly from the frontend to Supabase.
 
 After changing `.env.local`, restart Vite.
 
@@ -280,8 +298,11 @@ python -m venv .venv
 source .venv/bin/activate
 python -m pip install --upgrade pip
 pip install -r requirements.txt
+export SUPABASE_URL=https://lmsglqjgvqshzdohyonw.supabase.co
 python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
+
+`SUPABASE_URL` is required here too — see the Authentication section below.
 
 Codespaces backend URL:
 
@@ -313,6 +334,8 @@ Create or edit `frontend/.env.local`.
 
 ```env
 VITE_API_BASE_URL=https://<codespace-name>-8000.app.github.dev
+VITE_SUPABASE_URL=https://lmsglqjgvqshzdohyonw.supabase.co
+VITE_SUPABASE_ANON_KEY=<Supabase Project Settings > API > anon public key>
 ```
 
 Do not add a trailing slash. Restart Vite after changing this file.
@@ -329,17 +352,29 @@ For production, do not rely on broad development regexes. Use the concrete Verce
 
 ## Environment Variables Summary
 
-### Local `.env.local`
+### Local `.env.local` (frontend)
 
 ```env
 VITE_API_BASE_URL=http://127.0.0.1:8000
+VITE_SUPABASE_URL=https://lmsglqjgvqshzdohyonw.supabase.co
+VITE_SUPABASE_ANON_KEY=<anon public key>
 ```
 
-### Codespaces `.env.local`
+### Codespaces `.env.local` (frontend)
 
 ```env
 VITE_API_BASE_URL=https://<codespace-name>-8000.app.github.dev
+VITE_SUPABASE_URL=https://lmsglqjgvqshzdohyonw.supabase.co
+VITE_SUPABASE_ANON_KEY=<anon public key>
 ```
+
+### Local/Codespaces shell env (backend)
+
+```text
+SUPABASE_URL=https://lmsglqjgvqshzdohyonw.supabase.co
+```
+
+Required for every backend run now (admin JWT verification). Not a secret — safe to set directly in the shell.
 
 ### Production
 
@@ -375,14 +410,31 @@ Use `/api` as the API prefix.
 Current core endpoints:
 
 ```text
+# Admin (require a valid admin Authorization: Bearer <token>)
 GET    /api/wines
 POST   /api/wines
 GET    /api/wines/{id}
 PATCH  /api/wines/{id}
 DELETE /api/wines/{id}
+POST   /api/wines/{id}/transactions
+POST   /api/images
+
+# Customer-facing (no auth, restricted response fields)
+GET    /api/public/wines
+GET    /api/public/wines/{id}
 ```
 
+`/api/public/wines*` (`app/routers/public_wines.py`, `schemas.WineCustomerResponse`) never returns `purchase_price`, `quantity`, `reserved_quantity`, `available_quantity`, `location`, `management_code`, or `comment` — only `sale_price` and a boolean `in_stock`. Shared filter-building logic lives in `app/wine_filters.py` and is used by both the admin and public list endpoints; keep it that way instead of duplicating filter code when either endpoint changes.
+
 Keep response shapes stable once the frontend depends on them.
+
+### Authentication
+
+- All `/api/wines` and `/api/images` routes require Supabase Auth. Enforced via `Depends(get_current_admin)` at the router level in `app/routers/wines.py` and `app/routers/images.py` (`app/auth.py`).
+- Admins are identified by `app_metadata.role == "admin"` on the Supabase Auth user (set via SQL against `auth.users.raw_app_meta_data`, not the dashboard's user-metadata UI). Requests without this claim get `403`.
+- Token verification uses Supabase's JWKS endpoint (`{SUPABASE_URL}/auth/v1/.well-known/jwks.json`), because this project signs tokens with an asymmetric key (ES256), not the legacy shared JWT secret. Do not reintroduce HS256/`SUPABASE_JWT_SECRET`-based verification without first checking the token header's `alg`.
+- The frontend uses `@supabase/supabase-js` (`src/lib/supabaseClient.ts`) **only** for login/session (`features/auth/`). It must never be used for wine data access — that always goes through the FastAPI backend, per the data-access policy above.
+- `apiClient.ts` automatically attaches the current Supabase session's access token to every request when one exists (harmless no-op against `/api/public/wines*`, which ignores it since that router has no auth dependency). `RequireAuth` (`features/auth/components/RequireAuth.tsx`) gates the `/admin/wines` route tree behind login; `/wines` (customer) is intentionally public — see Routing above.
 
 ### Wine Model Fields
 
@@ -487,18 +539,27 @@ Do not hard-code API base URLs in components.
 
 ### Routing
 
-Expected routes:
+The app is split into a public customer area and an authenticated admin area.
 
 ```text
-/                -> redirect to /wines
-/wines           -> wine list
-/wines/new       -> create wine
-/wines/:wineId   -> wine detail
-/wines/:wineId/edit -> edit wine
-*                -> not found
+/                       -> redirect to /wines
+/login                  -> admin login (standalone, no layout)
+
+# Customer-facing (public, no login, PublicLayout)
+/wines                  -> customer wine list (read-only, restricted fields)
+/wines/:wineId          -> customer wine detail
+
+# Admin (requires login, RequireAuth + AppLayout)
+/admin                  -> redirect to /admin/wines
+/admin/wines            -> admin wine list
+/admin/wines/new        -> create wine
+/admin/wines/:wineId    -> admin wine detail (edit/delete/stock actions)
+/admin/wines/:wineId/edit -> edit wine
+
+*                       -> not found
 ```
 
-Routes should render inside `AppLayout` unless intentionally public or standalone.
+Customer routes render inside `PublicLayout` (`src/components/layout/PublicLayout.tsx`); admin routes render inside `AppLayout`, gated by `RequireAuth`. Do not add new admin functionality under `/wines` — that path is customer-facing and must only ever call `/api/public/wines*`.
 
 ## UI and Design Guidelines
 

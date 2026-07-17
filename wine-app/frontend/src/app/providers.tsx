@@ -15,6 +15,7 @@ import {
   QueryClientProvider,
 } from "@tanstack/react-query";
 
+import { AuthProvider } from "../features/auth/context/AuthContext";
 import { queryClient } from "../lib/queryClient";
 import { appTheme } from "../theme/theme";
 
@@ -30,7 +31,9 @@ export function AppProviders({
         <QueryClientProvider
           client={queryClient}
         >
-          {children}
+          <AuthProvider>
+            {children}
+          </AuthProvider>
         </QueryClientProvider>
       </ThemeProvider>
     </StyledEngineProvider>

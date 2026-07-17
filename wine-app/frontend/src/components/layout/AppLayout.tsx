@@ -9,6 +9,8 @@ import SwapHorizOutlined from "@mui/icons-material/SwapHorizOutlined";
 import UploadFileOutlined from "@mui/icons-material/UploadFileOutlined";
 import WineBarOutlined from "@mui/icons-material/WineBarOutlined";
 
+import LogoutOutlined from "@mui/icons-material/LogoutOutlined";
+
 import {
   AppBar,
   Avatar,
@@ -21,10 +23,14 @@ import {
   ListItemButton,
   ListItemIcon,
   ListItemText,
+  Menu,
+  MenuItem,
   SvgIcon,
   Toolbar,
   Typography,
 } from "@mui/material";
+
+import { useState, type MouseEvent } from "react";
 
 import {
   NavLink,
@@ -32,6 +38,7 @@ import {
   useNavigate,
 } from "react-router";
 
+import { useAuth } from "../../features/auth/context/AuthContext";
 import {
   designTokens,
 } from "../../theme/theme";
@@ -61,7 +68,7 @@ const navigationItems = [
   {
     label: "ワイン一覧",
     icon: <WineBarOutlined />,
-    path: "/wines",
+    path: "/admin/wines",
   },
   {
     label: "在庫管理",
@@ -98,6 +105,18 @@ const navigationItems = [
 
 export function AppLayout() {
   const navigate = useNavigate();
+  const { session, signOut } = useAuth();
+
+  const [
+    userMenuAnchor,
+    setUserMenuAnchor,
+  ] = useState<HTMLElement | null>(null);
+
+  async function handleLogout() {
+    setUserMenuAnchor(null);
+    await signOut();
+    navigate("/login", { replace: true });
+  }
 
   return (
     <Box
@@ -171,7 +190,7 @@ export function AppLayout() {
               variant="contained"
               startIcon={<Add />}
               onClick={() =>
-                navigate("/wines/new")
+                navigate("/admin/wines/new")
               }
               sx={{
                 display: {
@@ -197,16 +216,55 @@ export function AppLayout() {
               <HelpOutlineIcon />
             </IconButton>
 
-            <Avatar
-              sx={{
-                width: 36,
-                height: 36,
-                bgcolor: "primary.main",
-                fontSize: 13,
-              }}
+            <IconButton
+              aria-label="アカウントメニュー"
+              onClick={(
+                event: MouseEvent<HTMLElement>,
+              ) =>
+                setUserMenuAnchor(
+                  event.currentTarget,
+                )
+              }
             >
-              WS
-            </Avatar>
+              <Avatar
+                sx={{
+                  width: 36,
+                  height: 36,
+                  bgcolor: "primary.main",
+                  fontSize: 13,
+                }}
+              >
+                WS
+              </Avatar>
+            </IconButton>
+
+            <Menu
+              anchorEl={userMenuAnchor}
+              open={Boolean(userMenuAnchor)}
+              onClose={() =>
+                setUserMenuAnchor(null)
+              }
+            >
+              {session?.user.email && (
+                <MenuItem
+                  disabled
+                  sx={{
+                    opacity: "1 !important",
+                    fontSize: 13,
+                    color: "text.secondary",
+                  }}
+                >
+                  {session.user.email}
+                </MenuItem>
+              )}
+
+              <MenuItem onClick={handleLogout}>
+                <ListItemIcon>
+                  <LogoutOutlined fontSize="small" />
+                </ListItemIcon>
+                ログアウト
+              </MenuItem>
+            </Menu>
           </div>
         </Toolbar>
       </AppBar>

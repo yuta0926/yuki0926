@@ -1,22 +1,23 @@
-import { Paper, Typography } from "@mui/material";
+import { Chip, Paper, Typography } from "@mui/material";
 import { Link } from "react-router";
 
 import { WineBadge } from "../../../components/common/WineBadge";
 import { WineImage } from "../../../components/common/WineImage";
+import { designTokens } from "../../../theme/theme";
 
 import { formatPrice } from "../utils/formatPrice";
 
-import type { Wine } from "../types/wine";
+import type { WineCustomer } from "../types/wine";
 
 
-type WineCardGridViewProps = {
-  wines: Wine[];
+type CustomerWineCardGridViewProps = {
+  wines: WineCustomer[];
 };
 
 
-export function WineCardGridView({
+export function CustomerWineCardGridView({
   wines,
-}: WineCardGridViewProps) {
+}: CustomerWineCardGridViewProps) {
   if (wines.length === 0) {
     return (
       <div className="rounded-xl border border-app-border bg-app-surface px-6 py-16 text-center text-app-text-secondary">
@@ -45,7 +46,7 @@ export function WineCardGridView({
 
           <div className="flex flex-col gap-2 p-4">
             <Link
-              to={`/admin/wines/${wine.id}`}
+              to={`/wines/${wine.id}`}
               className="font-medium text-app-text transition-colors hover:text-app-primary hover:underline"
             >
               {wine.name}
@@ -65,17 +66,23 @@ export function WineCardGridView({
             </Typography>
 
             <div className="mt-1 flex items-center justify-between text-sm">
-              <span className="text-app-text-secondary">
-                {wine.location ?? "-"}
-              </span>
+              <Chip
+                label={wine.in_stock ? "在庫あり" : "在庫なし"}
+                variant="outlined"
+                size="small"
+                sx={{
+                  color: wine.in_stock
+                    ? designTokens.colors.success
+                    : designTokens.colors.textMuted,
+                  borderColor: wine.in_stock
+                    ? designTokens.colors.success
+                    : designTokens.colors.border,
+                }}
+              />
 
               <span className="font-medium text-app-text">
                 {formatPrice(wine.sale_price)}
               </span>
-            </div>
-
-            <div className="text-right text-xs text-app-text-secondary">
-              在庫 {wine.quantity}本
             </div>
           </div>
         </Paper>
