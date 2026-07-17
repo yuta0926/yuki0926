@@ -107,9 +107,10 @@ import {
     values: WineSearchParams,
     page: number,
     limit: number,
+    view: WineViewMode,
   ): URLSearchParams {
     const params = new URLSearchParams();
-  
+
     Object.entries(values).forEach(
       ([key, value]) => {
         if (
@@ -119,28 +120,35 @@ import {
         ) {
           return;
         }
-  
+
         params.set(
           key,
           String(value),
         );
       },
     );
-  
+
     if (page !== DEFAULT_PAGE) {
       params.set(
         "page",
         String(page),
       );
     }
-  
+
     if (limit !== DEFAULT_LIMIT) {
       params.set(
         "limit",
         String(limit),
       );
     }
-  
+
+    if (view !== "list") {
+      params.set(
+        "view",
+        view,
+      );
+    }
+
     return params;
   }
   
@@ -268,19 +276,20 @@ import {
           values,
           DEFAULT_PAGE,
           limit,
+          view,
         );
-  
+
       setSearchParams(nextParams);
     }
-  
-  
+
+
     function handleClear() {
       setSearchParams(
         new URLSearchParams(),
       );
     }
-  
-  
+
+
     function handlePageChange(
       nextPage: number,
     ) {
@@ -289,11 +298,12 @@ import {
           filters,
           nextPage,
           limit,
+          view,
         ),
       );
     }
-  
-  
+
+
     function handleLimitChange(
       nextLimit: number,
     ) {
@@ -302,6 +312,7 @@ import {
           filters,
           DEFAULT_PAGE,
           nextLimit,
+          view,
         ),
       );
     }
