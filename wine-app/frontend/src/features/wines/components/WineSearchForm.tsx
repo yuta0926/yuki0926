@@ -168,7 +168,7 @@ export function WineSearchForm({
         boxShadow: 2,
       }}
     >
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-[2fr_repeat(5,minmax(130px,1fr))_auto]">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-[minmax(200px,2fr)_repeat(5,minmax(130px,1fr))_auto]">
         <TextField
           name="keyword"
           label="キーワード"
