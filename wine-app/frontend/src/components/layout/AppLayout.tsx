@@ -378,6 +378,9 @@ export function AppLayout() {
               startIcon={
                 <UploadFileOutlined />
               }
+              onClick={() =>
+                navigate("/admin/wines/import")
+              }
               sx={{
                 color: "text.secondary",
               }}

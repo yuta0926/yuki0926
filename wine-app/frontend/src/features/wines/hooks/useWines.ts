@@ -10,6 +10,7 @@ import {
   deleteWine,
   getWine,
   getWines,
+  importWines,
   updateWine,
   uploadWineImage,
 } from "../api/winesApi";
@@ -128,6 +129,21 @@ export function useUploadWineImage() {
   return useMutation({
     mutationFn: (file: File) =>
       uploadWineImage(file),
+  });
+}
+
+export function useImportWines() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (file: File) =>
+      importWines(file),
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: wineQueryKeys.lists(),
+      });
+    },
   });
 }
 

@@ -150,6 +150,19 @@ export type Wine = {
   };
 
 
+  export type WineImportRowError = {
+    row: number;
+    message: string;
+  };
+
+
+  export type WineImportResult = {
+    created_count: number;
+    skipped_count: number;
+    errors: WineImportRowError[];
+  };
+
+
   export type WineCustomer = {
     id: number;
 

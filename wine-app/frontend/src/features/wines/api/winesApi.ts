@@ -5,6 +5,7 @@ import type {
   InventoryTransactionCreateInput,
   Wine,
   WineCreateInput,
+  WineImportResult,
   WineListResponse,
   WineSearchParams,
   WineUpdateInput,
@@ -104,6 +105,22 @@ export async function uploadWineImage(
 
   return apiClient<ImageUploadResponse>(
     "/api/images",
+    {
+      method: "POST",
+      body: formData,
+    },
+  );
+}
+
+
+export async function importWines(
+  file: File,
+): Promise<WineImportResult> {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  return apiClient<WineImportResult>(
+    "/api/wines/import",
     {
       method: "POST",
       body: formData,

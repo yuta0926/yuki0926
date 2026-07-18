@@ -14,6 +14,7 @@ import { NotFoundPage } from "../pages/NotFoundPage";
 import { WineCreatePage } from "../pages/WineCreatePage";
 import { WineDetailPage } from "../pages/WineDetailPage";
 import { WineEditPage } from "../pages/WineEditPage";
+import { WineImportPage } from "../pages/WineImportPage";
 import { WineListPage } from "../pages/WineListPage";
 
 export function AppRouter() {
@@ -73,6 +74,11 @@ export function AppRouter() {
         <Route
           path="/admin/wines/new"
           element={<WineCreatePage />}
+        />
+
+        <Route
+          path="/admin/wines/import"
+          element={<WineImportPage />}
         />
 
         <Route
