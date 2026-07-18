@@ -1,7 +1,8 @@
 import Add from "@mui/icons-material/Add";
+import ArrowDropDown from "@mui/icons-material/ArrowDropDown";
+import NoteAddOutlined from "@mui/icons-material/NoteAddOutlined";
 import NotificationsNone from "@mui/icons-material/NotificationsNone";
 import SwapHorizOutlined from "@mui/icons-material/SwapHorizOutlined";
-import UploadFileOutlined from "@mui/icons-material/UploadFileOutlined";
 import WineBarOutlined from "@mui/icons-material/WineBarOutlined";
 
 import LogoutOutlined from "@mui/icons-material/LogoutOutlined";
@@ -11,7 +12,6 @@ import {
   Avatar,
   Box,
   Button,
-  Divider,
   Drawer,
   IconButton,
   List,
@@ -67,6 +67,11 @@ export function AppLayout() {
   const [
     userMenuAnchor,
     setUserMenuAnchor,
+  ] = useState<HTMLElement | null>(null);
+
+  const [
+    registerMenuAnchor,
+    setRegisterMenuAnchor,
   ] = useState<HTMLElement | null>(null);
 
   async function handleLogout() {
@@ -146,8 +151,13 @@ export function AppLayout() {
             <Button
               variant="contained"
               startIcon={<Add />}
-              onClick={() =>
-                navigate("/admin/wines/new")
+              endIcon={<ArrowDropDown />}
+              onClick={(
+                event: MouseEvent<HTMLElement>,
+              ) =>
+                setRegisterMenuAnchor(
+                  event.currentTarget,
+                )
               }
               sx={{
                 display: {
@@ -158,6 +168,38 @@ export function AppLayout() {
             >
               新規登録
             </Button>
+
+            <Menu
+              anchorEl={registerMenuAnchor}
+              open={Boolean(registerMenuAnchor)}
+              onClose={() =>
+                setRegisterMenuAnchor(null)
+              }
+            >
+              <MenuItem
+                onClick={() => {
+                  setRegisterMenuAnchor(null);
+                  navigate("/admin/wines/new");
+                }}
+              >
+                <ListItemIcon>
+                  <Add fontSize="small" />
+                </ListItemIcon>
+                1件登録
+              </MenuItem>
+
+              <MenuItem
+                onClick={() => {
+                  setRegisterMenuAnchor(null);
+                  navigate("/admin/wines/import");
+                }}
+              >
+                <ListItemIcon>
+                  <NoteAddOutlined fontSize="small" />
+                </ListItemIcon>
+                Excelで一括登録
+              </MenuItem>
+            </Menu>
 
             <IconButton
               aria-label="通知"
@@ -325,26 +367,6 @@ export function AppLayout() {
               ),
             )}
           </List>
-
-          <div className="mt-auto px-3">
-            <Divider sx={{ mb: 2 }} />
-
-            <Button
-              fullWidth
-              variant="outlined"
-              startIcon={
-                <UploadFileOutlined />
-              }
-              onClick={() =>
-                navigate("/admin/wines/import")
-              }
-              sx={{
-                color: "text.secondary",
-              }}
-            >
-              インポート / エクスポート
-            </Button>
-          </div>
         </div>
       </Drawer>
 
