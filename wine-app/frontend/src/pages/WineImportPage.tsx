@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import {
   ArrowBackOutlined,
@@ -29,6 +29,7 @@ const ACCEPTED_FILE_TYPES = [
 
 export function WineImportPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const resultRef = useRef<HTMLDivElement>(null);
   const importWinesMutation = useImportWines();
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -63,6 +64,9 @@ export function WineImportPage() {
     setSubmitErrorMessage(null);
 
     importWinesMutation.mutate(selectedFile, {
+      onSuccess: () => {
+        setSelectedFile(null);
+      },
       onError: (error) => {
         setSubmitErrorMessage(
           error instanceof ApiError
@@ -74,6 +78,15 @@ export function WineImportPage() {
   }
 
   const result = importWinesMutation.data;
+
+  useEffect(() => {
+    if (result) {
+      resultRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }
+  }, [result]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -169,7 +182,7 @@ export function WineImportPage() {
       </Paper>
 
       {result && (
-        <Paper variant="outlined" sx={{ p: 3 }}>
+        <Paper ref={resultRef} variant="outlined" sx={{ p: 3 }}>
           <Typography variant="h2" sx={{ mb: 2 }}>
             登録結果
           </Typography>
@@ -178,7 +191,7 @@ export function WineImportPage() {
             severity={result.skipped_count > 0 ? "warning" : "success"}
             sx={{ mb: result.errors.length > 0 ? 2 : 0 }}
           >
-            {`作成: ${result.created_count}件 / スキップ: ${result.skipped_count}件`}
+            {`インポートが完了しました。作成: ${result.created_count}件 / スキップ: ${result.skipped_count}件`}
           </Alert>
 
           {result.errors.length > 0 && (
