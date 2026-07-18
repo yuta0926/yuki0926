@@ -8,6 +8,7 @@ import {
   createWine,
   createWineTransaction,
   deleteWine,
+  getTransactions,
   getWine,
   getWines,
   importWines,
@@ -17,6 +18,7 @@ import {
 
 import type {
   InventoryTransactionCreateInput,
+  TransactionSearchParams,
   WineCreateInput,
   WineSearchParams,
   WineUpdateInput,
@@ -39,6 +41,12 @@ export const wineQueryKeys = {
     ...wineQueryKeys.all,
     "detail",
     wineId,
+  ] as const,
+
+  transactions: (params: TransactionSearchParams) => [
+    ...wineQueryKeys.all,
+    "transactions",
+    params,
   ] as const,
 };
 
@@ -63,6 +71,20 @@ export function useWine(
     queryKey: wineQueryKeys.detail(wineId),
 
     queryFn: () => getWine(wineId),
+  });
+}
+
+export function useTransactions(
+  params: TransactionSearchParams,
+) {
+  return useQuery({
+    queryKey: wineQueryKeys.transactions(params),
+
+    queryFn: () => getTransactions(params),
+
+    // ページ切替中に前ページのデータを一時表示する
+    placeholderData: (previousData) =>
+      previousData,
   });
 }
 

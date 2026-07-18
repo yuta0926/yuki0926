@@ -3,6 +3,8 @@ import { apiClient } from "../../../lib/apiClient";
 import type {
   ImageUploadResponse,
   InventoryTransactionCreateInput,
+  TransactionListResponse,
+  TransactionSearchParams,
   Wine,
   WineCreateInput,
   WineImportResult,
@@ -13,7 +15,7 @@ import type {
 
 
 function buildSearchParams(
-  params: WineSearchParams,
+  params: Record<string, unknown>,
 ): URLSearchParams {
   const searchParams = new URLSearchParams();
 
@@ -126,6 +128,20 @@ export async function importWines(
       body: formData,
     },
   );
+}
+
+
+export async function getTransactions(
+  params: TransactionSearchParams = {},
+): Promise<TransactionListResponse> {
+  const searchParams = buildSearchParams(params);
+  const queryString = searchParams.toString();
+
+  const path = queryString
+    ? `/api/wines/transactions?${queryString}`
+    : "/api/wines/transactions";
+
+  return apiClient<TransactionListResponse>(path);
 }
 
 

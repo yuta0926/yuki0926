@@ -1,10 +1,5 @@
 import Add from "@mui/icons-material/Add";
-import BarChartOutlined from "@mui/icons-material/BarChartOutlined";
-import DashboardOutlined from "@mui/icons-material/DashboardOutlined";
-import Inventory2Outlined from "@mui/icons-material/Inventory2Outlined";
-import LocationOnOutlined from "@mui/icons-material/LocationOnOutlined";
 import NotificationsNone from "@mui/icons-material/NotificationsNone";
-import SettingsOutlined from "@mui/icons-material/SettingsOutlined";
 import SwapHorizOutlined from "@mui/icons-material/SwapHorizOutlined";
 import UploadFileOutlined from "@mui/icons-material/UploadFileOutlined";
 import WineBarOutlined from "@mui/icons-material/WineBarOutlined";
@@ -51,54 +46,16 @@ function HelpOutlineIcon() {
   );
 }
 
-function PeopleOutlineIcon() {
-  return (
-    <SvgIcon>
-      <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-.32 0-.63.05-.91.14.57.8.91 1.79.91 2.86s-.34 2.06-.91 2.86c.28.09.59.14.91.14Zm-8 0c1.66 0 3-1.34 3-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3Zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5C15 14.17 10.33 13 8 13Zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5Z" />
-    </SvgIcon>
-  );
-}
-
 const navigationItems = [
-  {
-    label: "ダッシュボード",
-    icon: <DashboardOutlined />,
-    path: "/dashboard",
-  },
   {
     label: "ワイン一覧",
     icon: <WineBarOutlined />,
     path: "/admin/wines",
   },
   {
-    label: "在庫管理",
-    icon: <Inventory2Outlined />,
-    path: "/inventory",
-  },
-  {
     label: "入出庫履歴",
     icon: <SwapHorizOutlined />,
-    path: "/history",
-  },
-  {
-    label: "生産者一覧",
-    icon: <PeopleOutlineIcon />,
-    path: "/producers",
-  },
-  {
-    label: "保管場所",
-    icon: <LocationOnOutlined />,
-    path: "/locations",
-  },
-  {
-    label: "レポート",
-    icon: <BarChartOutlined />,
-    path: "/reports",
-  },
-  {
-    label: "設定",
-    icon: <SettingsOutlined />,
-    path: "/settings",
+    path: "/admin/history",
   },
 ];
 

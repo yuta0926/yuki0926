@@ -10,12 +10,15 @@ import {
   Typography,
 } from "@mui/material";
 
+import { Link } from "react-router";
+
 import { designTokens } from "../../../theme/theme";
 import type { InventoryTransaction, TransactionType } from "../types/wine";
 
 
 type WineHistoryTableProps = {
   transactions: InventoryTransaction[];
+  viewAllHref?: string;
 };
 
 
@@ -59,12 +62,26 @@ function TransactionTypeBadge({ type }: { type: TransactionType }) {
 }
 
 
-export function WineHistoryTable({ transactions }: WineHistoryTableProps) {
+export function WineHistoryTable({
+  transactions,
+  viewAllHref,
+}: WineHistoryTableProps) {
   return (
     <Paper variant="outlined" sx={{ p: 3 }}>
-      <Typography variant="h2" sx={{ mb: 2 }}>
-        入出庫履歴
-      </Typography>
+      <div className="mb-2 flex items-center justify-between">
+        <Typography variant="h2">
+          入出庫履歴
+        </Typography>
+
+        {viewAllHref && (
+          <Link
+            to={viewAllHref}
+            className="text-sm text-app-primary hover:underline"
+          >
+            すべての履歴を見る
+          </Link>
+        )}
+      </div>
 
       {transactions.length === 0 ? (
         <p

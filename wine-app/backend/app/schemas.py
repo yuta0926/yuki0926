@@ -178,6 +178,22 @@ class InventoryTransactionResponse(BaseModel):
     )
 
 
+class InventoryTransactionWithWineResponse(InventoryTransactionResponse):
+    wine_id: int
+    wine_name: str
+
+
+class InventoryTransactionListResponse(BaseModel):
+    """
+    全ワイン横断の入出庫履歴一覧APIのレスポンス。
+    """
+
+    total: int
+    skip: int
+    limit: int
+    items: list[InventoryTransactionWithWineResponse]
+
+
 class WineResponse(WineBase):
     id: int
     created_at: datetime

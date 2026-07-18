@@ -170,7 +170,10 @@ export function WineDetailPage() {
         <WineComment wine={wine} />
       </div>
 
-      <WineHistoryTable transactions={wine.recent_transactions} />
+      <WineHistoryTable
+        transactions={wine.recent_transactions}
+        viewAllHref={`/admin/history?wine_id=${wine.id}`}
+      />
 
       <WineTransactionDialog
         open={transactionDialog.open}

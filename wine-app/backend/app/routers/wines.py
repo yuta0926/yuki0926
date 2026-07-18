@@ -19,7 +19,10 @@ from app.database import get_db
 from app.models import InventoryTransaction, Wine
 from app.schemas import (
     InventoryTransactionCreate,
+    InventoryTransactionListResponse,
     InventoryTransactionResponse,
+    InventoryTransactionWithWineResponse,
+    TransactionType,
     WineCreate,
     WineImportError,
     WineImportResult,
@@ -452,6 +455,99 @@ def get_wines(
         limit=limit,
         items=list(wines),
     )
+
+@router.get(
+    "/transactions",
+    response_model=InventoryTransactionListResponse,
+)
+def get_transactions(
+    db: DbSession,
+
+    wine_id: Annotated[
+        int | None,
+        Query(
+            description="指定した場合、そのワインの履歴のみに絞り込みます。",
+        ),
+    ] = None,
+
+    transaction_type: Annotated[
+        TransactionType | None,
+        Query(
+            description="in、out、move、adjustのいずれかで絞り込みます。",
+        ),
+    ] = None,
+
+    skip: Annotated[
+        int,
+        Query(
+            ge=0,
+            description="取得開始位置",
+        ),
+    ] = 0,
+
+    limit: Annotated[
+        int,
+        Query(
+            ge=1,
+            le=500,
+            description="取得件数",
+        ),
+    ] = 20,
+) -> InventoryTransactionListResponse:
+    """
+    全ワイン横断の入出庫履歴を新しい順に一覧取得する。
+    """
+
+    filters = []
+
+    if wine_id is not None:
+        filters.append(InventoryTransaction.wine_id == wine_id)
+
+    if transaction_type is not None:
+        filters.append(
+            InventoryTransaction.transaction_type == transaction_type,
+        )
+
+    count_statement = (
+        select(func.count())
+        .select_from(InventoryTransaction)
+        .where(*filters)
+    )
+
+    total = db.scalar(count_statement) or 0
+
+    statement = (
+        select(InventoryTransaction, Wine.name)
+        .join(Wine, InventoryTransaction.wine_id == Wine.id)
+        .where(*filters)
+        .order_by(
+            InventoryTransaction.transaction_at.desc(),
+            InventoryTransaction.id.desc(),
+        )
+        .offset(skip)
+        .limit(limit)
+    )
+
+    rows = db.execute(statement).all()
+
+    items = [
+        InventoryTransactionWithWineResponse(
+            **InventoryTransactionResponse.model_validate(
+                transaction,
+            ).model_dump(),
+            wine_id=transaction.wine_id,
+            wine_name=wine_name,
+        )
+        for transaction, wine_name in rows
+    ]
+
+    return InventoryTransactionListResponse(
+        total=total,
+        skip=skip,
+        limit=limit,
+        items=items,
+    )
+
 
 @router.get(
     "/{wine_id}",

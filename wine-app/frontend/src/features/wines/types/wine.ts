@@ -63,6 +63,28 @@ export type Wine = {
   };
 
 
+  export type InventoryTransactionWithWine = InventoryTransaction & {
+    wine_id: number;
+    wine_name: string;
+  };
+
+
+  export type TransactionListResponse = {
+    total: number;
+    skip: number;
+    limit: number;
+    items: InventoryTransactionWithWine[];
+  };
+
+
+  export type TransactionSearchParams = {
+    wine_id?: number;
+    transaction_type?: TransactionType;
+    skip?: number;
+    limit?: number;
+  };
+
+
   export type WineListResponse = {
     total: number;
     skip: number;
