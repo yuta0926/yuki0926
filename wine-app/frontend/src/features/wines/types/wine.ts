@@ -120,9 +120,12 @@ export type Wine = {
   
     min_sale_price?: number;
     max_sale_price?: number;
-  
+
+    min_purchase_price?: number;
+    max_purchase_price?: number;
+
     in_stock?: boolean;
-  
+
     sort_by?: WineSortField;
     sort_order?: SortOrder;
   

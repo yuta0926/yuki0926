@@ -344,6 +344,22 @@ def get_wines(
         ),
     ] = None,
 
+    min_purchase_price: Annotated[
+        int | None,
+        Query(
+            ge=0,
+            description="仕入値の下限(管理者向けのみ)",
+        ),
+    ] = None,
+
+    max_purchase_price: Annotated[
+        int | None,
+        Query(
+            ge=0,
+            description="仕入値の上限(管理者向けのみ)",
+        ),
+    ] = None,
+
     in_stock: Annotated[
         bool | None,
         Query(
@@ -392,6 +408,11 @@ def get_wines(
     """
 
     validate_price_range(min_sale_price, max_sale_price)
+    validate_price_range(
+        min_purchase_price,
+        max_purchase_price,
+        field_label="purchase_price",
+    )
 
     filters = build_common_wine_filters(
         keyword=keyword,
@@ -411,6 +432,13 @@ def get_wines(
         filters.append(
             Wine.location == location,
         )
+
+    # 仕入値による絞り込み(管理者向けのみ)
+    if min_purchase_price is not None:
+        filters.append(Wine.purchase_price >= min_purchase_price)
+
+    if max_purchase_price is not None:
+        filters.append(Wine.purchase_price <= max_purchase_price)
 
     # 総件数取得
     count_statement = (

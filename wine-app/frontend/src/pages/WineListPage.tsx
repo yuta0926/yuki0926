@@ -227,7 +227,17 @@ import {
         searchParams,
         "max_sale_price",
       ),
-  
+
+      min_purchase_price: getNumberParam(
+        searchParams,
+        "min_purchase_price",
+      ),
+
+      max_purchase_price: getNumberParam(
+        searchParams,
+        "max_purchase_price",
+      ),
+
       in_stock: getBooleanParam(
         searchParams,
         "in_stock",

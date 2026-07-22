@@ -80,15 +80,17 @@ def build_common_wine_filters(
 
 
 def validate_price_range(
-    min_sale_price: int | None,
-    max_sale_price: int | None,
+    min_price: int | None,
+    max_price: int | None,
+    *,
+    field_label: str = "sale_price",
 ) -> None:
     if (
-        min_sale_price is not None
-        and max_sale_price is not None
-        and min_sale_price > max_sale_price
+        min_price is not None
+        and max_price is not None
+        and min_price > max_price
     ):
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="min_sale_priceはmax_sale_price以下にしてください。",
+            detail=f"min_{field_label}はmax_{field_label}以下にしてください。",
         )

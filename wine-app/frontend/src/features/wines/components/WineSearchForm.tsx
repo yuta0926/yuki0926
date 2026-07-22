@@ -109,6 +109,18 @@ export function WineSearchForm({
         "max_sale_price",
       );
 
+    const minPurchasePrice =
+      getOptionalString(
+        formData,
+        "min_purchase_price",
+      );
+
+    const maxPurchasePrice =
+      getOptionalString(
+        formData,
+        "max_purchase_price",
+      );
+
     const inStock =
       getOptionalString(
         formData,
@@ -166,6 +178,22 @@ export function WineSearchForm({
       }
     }
 
+    if (minPurchasePrice) {
+      const parsed = Number(minPurchasePrice);
+
+      if (Number.isFinite(parsed)) {
+        values.min_purchase_price = parsed;
+      }
+    }
+
+    if (maxPurchasePrice) {
+      const parsed = Number(maxPurchasePrice);
+
+      if (Number.isFinite(parsed)) {
+        values.max_purchase_price = parsed;
+      }
+    }
+
     if (inStock === "true") {
       values.in_stock = true;
     }
@@ -196,7 +224,7 @@ export function WineSearchForm({
         boxShadow: 2,
       }}
     >
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-[minmax(200px,2fr)_repeat(7,minmax(110px,1fr))_auto]">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-[minmax(200px,2fr)_repeat(9,minmax(110px,1fr))_auto]">
         <TextField
           name="keyword"
           label="キーワード"
@@ -324,6 +352,38 @@ export function WineSearchForm({
           type="number"
           defaultValue={
             initialValues.max_sale_price ?? ""
+          }
+          placeholder="指定なし"
+          fullWidth
+          slotProps={{
+            htmlInput: {
+              min: 0,
+            },
+          }}
+        />
+
+        <TextField
+          name="min_purchase_price"
+          label="仕入値(下限)"
+          type="number"
+          defaultValue={
+            initialValues.min_purchase_price ?? ""
+          }
+          placeholder="0"
+          fullWidth
+          slotProps={{
+            htmlInput: {
+              min: 0,
+            },
+          }}
+        />
+
+        <TextField
+          name="max_purchase_price"
+          label="仕入値(上限)"
+          type="number"
+          defaultValue={
+            initialValues.max_purchase_price ?? ""
           }
           placeholder="指定なし"
           fullWidth
