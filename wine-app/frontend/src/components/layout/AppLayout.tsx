@@ -1,5 +1,7 @@
 import Add from "@mui/icons-material/Add";
 import ArrowDropDown from "@mui/icons-material/ArrowDropDown";
+import ChevronLeft from "@mui/icons-material/ChevronLeft";
+import ChevronRight from "@mui/icons-material/ChevronRight";
 import NoteAddOutlined from "@mui/icons-material/NoteAddOutlined";
 import NotificationsNone from "@mui/icons-material/NotificationsNone";
 import SwapHorizOutlined from "@mui/icons-material/SwapHorizOutlined";
@@ -22,10 +24,11 @@ import {
   MenuItem,
   SvgIcon,
   Toolbar,
+  Tooltip,
   Typography,
 } from "@mui/material";
 
-import { useState, type MouseEvent } from "react";
+import { useEffect, useState, type MouseEvent } from "react";
 
 import {
   NavLink,
@@ -59,6 +62,8 @@ const navigationItems = [
   },
 ];
 
+const SIDEBAR_COLLAPSED_STORAGE_KEY = "wine-app:sidebar-collapsed";
+
 
 export function AppLayout() {
   const navigate = useNavigate();
@@ -73,6 +78,22 @@ export function AppLayout() {
     registerMenuAnchor,
     setRegisterMenuAnchor,
   ] = useState<HTMLElement | null>(null);
+
+  const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(
+    () =>
+      localStorage.getItem(SIDEBAR_COLLAPSED_STORAGE_KEY) === "true",
+  );
+
+  useEffect(() => {
+    localStorage.setItem(
+      SIDEBAR_COLLAPSED_STORAGE_KEY,
+      String(sidebarCollapsed),
+    );
+  }, [sidebarCollapsed]);
+
+  const sidebarWidth = sidebarCollapsed
+    ? designTokens.layout.sidebarCollapsedWidth
+    : designTokens.layout.sidebarWidth;
 
   async function handleLogout() {
     setUserMenuAnchor(null);
@@ -276,16 +297,22 @@ export function AppLayout() {
             lg: "block",
           },
 
-          width:
-            designTokens.layout
-              .sidebarWidth,
-
+          width: sidebarWidth,
           flexShrink: 0,
 
+          transition: (theme) =>
+            theme.transitions.create("width", {
+              duration: theme.transitions.duration.shortest,
+            }),
+
           "& .MuiDrawer-paper": {
-            width:
-              designTokens.layout
-                .sidebarWidth,
+            width: sidebarWidth,
+            overflowX: "hidden",
+
+            transition: (theme) =>
+              theme.transitions.create("width", {
+                duration: theme.transitions.duration.shortest,
+              }),
 
             top:
               designTokens.layout
@@ -302,6 +329,24 @@ export function AppLayout() {
         }}
       >
         <div className="flex h-full flex-col py-6">
+          <div
+            className={`flex px-2 pb-4 ${sidebarCollapsed ? "justify-center" : "justify-end"}`}
+          >
+            <IconButton
+              aria-label={
+                sidebarCollapsed
+                  ? "サイドバーを開く"
+                  : "サイドバーを閉じる"
+              }
+              size="small"
+              onClick={() =>
+                setSidebarCollapsed((current) => !current)
+              }
+            >
+              {sidebarCollapsed ? <ChevronRight /> : <ChevronLeft />}
+            </IconButton>
+          </div>
+
           <List disablePadding>
             {navigationItems.map(
               (item) => (
@@ -312,56 +357,67 @@ export function AppLayout() {
                   {({
                     isActive,
                   }) => (
-                    <ListItemButton
-                      selected={isActive}
-                      sx={{
-                        minHeight: 58,
-                        mx: 1,
-                        mb: 0.5,
-                        px: 2.5,
-                        borderRadius: 1,
+                    <Tooltip
+                      title={sidebarCollapsed ? item.label : ""}
+                      placement="right"
+                    >
+                      <ListItemButton
+                        selected={isActive}
+                        sx={{
+                          minHeight: 58,
+                          mx: 1,
+                          mb: 0.5,
+                          px: 2.5,
+                          borderRadius: 1,
 
-                        borderLeft:
-                          "3px solid transparent",
+                          justifyContent: sidebarCollapsed
+                            ? "center"
+                            : "flex-start",
 
-                        "&.Mui-selected": {
-                          color:
-                            "primary.main",
+                          borderLeft:
+                            "3px solid transparent",
 
-                          backgroundColor:
-                            "primary.light",
+                          "&.Mui-selected": {
+                            color:
+                              "primary.main",
 
-                          borderLeftColor:
-                            "primary.main",
-
-                          "&:hover": {
                             backgroundColor:
                               "primary.light",
-                          },
-                        },
-                      }}
-                    >
-                      <ListItemIcon
-                        sx={{
-                          minWidth: 40,
-                          color: "inherit",
-                        }}
-                      >
-                        {item.icon}
-                      </ListItemIcon>
 
-                      <ListItemText
-                        primary={item.label}
-                        slotProps={{
-                          primary: {
-                            sx: {
-                              fontSize: 14,
-                              fontWeight: isActive ? 600 : 400,
+                            borderLeftColor:
+                              "primary.main",
+
+                            "&:hover": {
+                              backgroundColor:
+                                "primary.light",
                             },
                           },
                         }}
-                      />
-                    </ListItemButton>
+                      >
+                        <ListItemIcon
+                          sx={{
+                            minWidth: sidebarCollapsed ? "auto" : 40,
+                            color: "inherit",
+                          }}
+                        >
+                          {item.icon}
+                        </ListItemIcon>
+
+                        {!sidebarCollapsed && (
+                          <ListItemText
+                            primary={item.label}
+                            slotProps={{
+                              primary: {
+                                sx: {
+                                  fontSize: 14,
+                                  fontWeight: isActive ? 600 : 400,
+                                },
+                              },
+                            }}
+                          />
+                        )}
+                      </ListItemButton>
+                    </Tooltip>
                   )}
                 </NavLink>
               ),
@@ -379,8 +435,13 @@ export function AppLayout() {
 
           ml: {
             xs: 0,
-            lg: `${designTokens.layout.sidebarWidth}px`,
+            lg: `${sidebarWidth}px`,
           },
+
+          transition: (theme) =>
+            theme.transitions.create("margin-left", {
+              duration: theme.transitions.duration.shortest,
+            }),
         }}
       >
         <div className="mx-auto w-full px-4 py-8 md:px-8">

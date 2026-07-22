@@ -127,6 +127,7 @@ export const designTokens = {
   layout: {
     headerHeight: 88,
     sidebarWidth: 228,
+    sidebarCollapsedWidth: 72,
   },
 
   radius: {
