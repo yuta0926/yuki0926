@@ -77,6 +77,10 @@ export function WineTableView({
             </TableCell>
 
             <TableCell align="right">
+              仕入れ価格
+            </TableCell>
+
+            <TableCell align="right">
               売価
             </TableCell>
 
@@ -135,6 +139,12 @@ export function WineTableView({
 
               <TableCell align="center">
                 {wine.vintage ?? "-"}
+              </TableCell>
+
+              <TableCell align="right">
+                {formatPrice(
+                  wine.purchase_price,
+                )}
               </TableCell>
 
               <TableCell align="right">

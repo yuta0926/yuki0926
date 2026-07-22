@@ -97,6 +97,18 @@ export function WineSearchForm({
         "location",
       );
 
+    const minSalePrice =
+      getOptionalString(
+        formData,
+        "min_sale_price",
+      );
+
+    const maxSalePrice =
+      getOptionalString(
+        formData,
+        "max_sale_price",
+      );
+
     const inStock =
       getOptionalString(
         formData,
@@ -138,6 +150,22 @@ export function WineSearchForm({
       values.location = location;
     }
 
+    if (minSalePrice) {
+      const parsed = Number(minSalePrice);
+
+      if (Number.isFinite(parsed)) {
+        values.min_sale_price = parsed;
+      }
+    }
+
+    if (maxSalePrice) {
+      const parsed = Number(maxSalePrice);
+
+      if (Number.isFinite(parsed)) {
+        values.max_sale_price = parsed;
+      }
+    }
+
     if (inStock === "true") {
       values.in_stock = true;
     }
@@ -168,7 +196,7 @@ export function WineSearchForm({
         boxShadow: 2,
       }}
     >
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-[minmax(200px,2fr)_repeat(5,minmax(130px,1fr))_auto]">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-[minmax(200px,2fr)_repeat(7,minmax(110px,1fr))_auto]">
         <TextField
           name="keyword"
           label="キーワード"
@@ -272,6 +300,38 @@ export function WineSearchForm({
           }
           placeholder="すべて"
           fullWidth
+        />
+
+        <TextField
+          name="min_sale_price"
+          label="売価(下限)"
+          type="number"
+          defaultValue={
+            initialValues.min_sale_price ?? ""
+          }
+          placeholder="0"
+          fullWidth
+          slotProps={{
+            htmlInput: {
+              min: 0,
+            },
+          }}
+        />
+
+        <TextField
+          name="max_sale_price"
+          label="売価(上限)"
+          type="number"
+          defaultValue={
+            initialValues.max_sale_price ?? ""
+          }
+          placeholder="指定なし"
+          fullWidth
+          slotProps={{
+            htmlInput: {
+              min: 0,
+            },
+          }}
         />
 
         <FormControl fullWidth size="small">

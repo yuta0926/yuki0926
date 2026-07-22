@@ -130,6 +130,8 @@ export function CustomerWineListPage() {
     keyword: getStringParam(searchParams, "keyword"),
     wine_type: getStringParam(searchParams, "wine_type"),
     style_type: getStringParam(searchParams, "style_type"),
+    min_sale_price: getNumberParam(searchParams, "min_sale_price"),
+    max_sale_price: getNumberParam(searchParams, "max_sale_price"),
     in_stock: getBooleanParam(searchParams, "in_stock"),
 
     sort_by:

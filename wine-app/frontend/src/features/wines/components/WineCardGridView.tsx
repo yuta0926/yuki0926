@@ -74,8 +74,9 @@ export function WineCardGridView({
               </span>
             </div>
 
-            <div className="text-right text-xs text-app-text-secondary">
-              在庫 {wine.quantity}本
+            <div className="flex items-center justify-between text-xs text-app-text-secondary">
+              <span>仕入 {formatPrice(wine.purchase_price)}</span>
+              <span>在庫 {wine.quantity}本</span>
             </div>
           </div>
         </Paper>

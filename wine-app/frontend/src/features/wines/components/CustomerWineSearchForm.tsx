@@ -58,6 +58,8 @@ export function CustomerWineSearchForm({
     const keyword = getOptionalString(formData, "keyword");
     const wineType = getOptionalString(formData, "wine_type");
     const styleType = getOptionalString(formData, "style_type");
+    const minSalePrice = getOptionalString(formData, "min_sale_price");
+    const maxSalePrice = getOptionalString(formData, "max_sale_price");
     const inStock = getOptionalString(formData, "in_stock");
 
     const sortBy = getOptionalString(
@@ -82,6 +84,22 @@ export function CustomerWineSearchForm({
       values.style_type = styleType;
     }
 
+    if (minSalePrice) {
+      const parsed = Number(minSalePrice);
+
+      if (Number.isFinite(parsed)) {
+        values.min_sale_price = parsed;
+      }
+    }
+
+    if (maxSalePrice) {
+      const parsed = Number(maxSalePrice);
+
+      if (Number.isFinite(parsed)) {
+        values.max_sale_price = parsed;
+      }
+    }
+
     if (inStock === "true") {
       values.in_stock = true;
     }
@@ -103,7 +121,7 @@ export function CustomerWineSearchForm({
       variant="outlined"
       sx={{ p: { xs: 2, md: 2.5 }, borderColor: "divider", boxShadow: 2 }}
     >
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-[2fr_repeat(3,minmax(130px,1fr))_auto]">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-[2fr_repeat(5,minmax(120px,1fr))_auto]">
         <TextField
           name="keyword"
           label="キーワード"
@@ -152,6 +170,34 @@ export function CustomerWineSearchForm({
             <MenuItem value="ナチュール">ナチュール</MenuItem>
           </Select>
         </FormControl>
+
+        <TextField
+          name="min_sale_price"
+          label="価格(下限)"
+          type="number"
+          defaultValue={initialValues.min_sale_price ?? ""}
+          placeholder="0"
+          fullWidth
+          slotProps={{
+            htmlInput: {
+              min: 0,
+            },
+          }}
+        />
+
+        <TextField
+          name="max_sale_price"
+          label="価格(上限)"
+          type="number"
+          defaultValue={initialValues.max_sale_price ?? ""}
+          placeholder="指定なし"
+          fullWidth
+          slotProps={{
+            htmlInput: {
+              min: 0,
+            },
+          }}
+        />
 
         <FormControl fullWidth size="small">
           <InputLabel id="customer-stock-label">在庫</InputLabel>
