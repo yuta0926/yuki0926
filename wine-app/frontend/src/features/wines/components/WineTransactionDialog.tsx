@@ -106,12 +106,8 @@ export function WineTransactionDialog({
       {
         transaction_type: transactionType,
         quantity: numericQuantity,
-        from_location:
-          transactionType === "out" ? location || undefined : undefined,
         to_location:
-          transactionType === "in" || transactionType === "move"
-            ? location || undefined
-            : undefined,
+          transactionType === "move" ? location || undefined : undefined,
         note: note || undefined,
       },
       {
@@ -154,15 +150,16 @@ export function WineTransactionDialog({
           fullWidth
         />
 
-        <TextField
-          label={transactionType === "out" ? "出庫元" : transactionType === "move" ? "移動先" : "入庫先"}
-          value={location}
-          onChange={(event) => setLocation(event.target.value)}
-          placeholder={wine.location ?? undefined}
-          error={!!locationError}
-          helperText={locationError}
-          fullWidth
-        />
+        {transactionType === "move" && (
+          <TextField
+            label="移動先"
+            value={location}
+            onChange={(event) => setLocation(event.target.value)}
+            error={!!locationError}
+            helperText={locationError}
+            fullWidth
+          />
+        )}
 
         <TextField
           label="備考"
