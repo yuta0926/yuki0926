@@ -66,7 +66,8 @@ export function WineTransactionDialog({
   const quantityError =
     !Number.isInteger(numericQuantity) || numericQuantity <= 0
       ? "1以上の整数を入力してください。"
-      : transactionType === "out" && numericQuantity > wine.quantity
+      : (transactionType === "out" || transactionType === "move") &&
+          numericQuantity > wine.quantity
         ? `在庫数(${wine.quantity}本)を超えています。`
         : null;
 
@@ -147,14 +148,8 @@ export function WineTransactionDialog({
           type="number"
           value={quantity}
           onChange={(event) => setQuantity(event.target.value)}
-          disabled={transactionType === "move"}
           error={!!quantityError}
-          helperText={
-            quantityError ??
-            (transactionType === "move"
-              ? "移動は現在庫すべてが対象です。"
-              : undefined)
-          }
+          helperText={quantityError}
           slotProps={{ htmlInput: { min: 1 } }}
           fullWidth
         />

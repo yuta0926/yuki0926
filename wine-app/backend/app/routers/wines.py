@@ -713,17 +713,54 @@ def create_wine_transaction(
         from_location = from_location or wine.location
 
     elif transaction_type == "move":
-        if wine.quantity == 0:
+        if quantity > wine.quantity:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail="在庫がないため移動できません。",
+                detail="移動数量が在庫数を超えています。",
             )
 
-        # 保管場所は1本ごとではなくワイン単位で管理しているため、
-        # 移動は現在庫すべてを対象として扱う。
-        quantity = wine.quantity
         from_location = from_location or wine.location
-        wine.location = to_location
+
+        # ワイン1レコード=1保管場所のため、移動先に同一ワイン
+        # (name+producer+vintage+size)のレコードが既にあればそこへ
+        # 加算し、なければ移動先ロケーションで新規レコードを作る。
+        target_wine = find_duplicate_wine(
+            db,
+            name=wine.name,
+            producer=wine.producer,
+            vintage=wine.vintage,
+            size=wine.size,
+            location=to_location,
+            exclude_id=wine.id,
+        )
+
+        if target_wine is None:
+            target_wine = Wine(
+                original_no=wine.original_no,
+                order_date=wine.order_date,
+                wine_type=wine.wine_type,
+                style_type=wine.style_type,
+                name=wine.name,
+                name_kana=wine.name_kana,
+                country=wine.country,
+                producer=wine.producer,
+                grape_variety=wine.grape_variety,
+                vintage=wine.vintage,
+                size=wine.size,
+                retail_price=wine.retail_price,
+                purchase_price=wine.purchase_price,
+                quantity=0,
+                sale_price=wine.sale_price,
+                location=to_location,
+                image_url=wine.image_url,
+                comment=wine.comment,
+                ai_check_status=wine.ai_check_status,
+            )
+            db.add(target_wine)
+            db.flush()
+
+        wine.quantity -= quantity
+        target_wine.quantity += quantity
 
     elif transaction_type == "adjust":
         wine.quantity = quantity
@@ -739,6 +776,20 @@ def create_wine_transaction(
     )
 
     db.add(transaction)
+
+    if transaction_type == "move":
+        db.add(
+            InventoryTransaction(
+                wine_id=target_wine.id,
+                transaction_type=transaction_type,
+                quantity=quantity,
+                from_location=from_location,
+                to_location=to_location,
+                note=transaction_data.note,
+                operated_by=transaction_data.operated_by,
+            )
+        )
+
     db.commit()
     db.refresh(wine)
 
