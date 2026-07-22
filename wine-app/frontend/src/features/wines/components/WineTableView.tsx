@@ -1,9 +1,25 @@
 import {
+  useState,
+} from "react";
+
+import {
+  DeleteOutlineOutlined,
+  EditOutlined,
   MoreHoriz,
 } from "@mui/icons-material";
 
 import {
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
   IconButton,
+  ListItemIcon,
+  ListItemText,
+  Menu,
+  MenuItem,
   Table,
   TableBody,
   TableCell,
@@ -15,12 +31,14 @@ import {
 
 import {
   Link,
+  useNavigate,
 } from "react-router";
 
 import {
   WineBadge,
 } from "../../../components/common/WineBadge";
 
+import { useDeleteWine } from "../hooks/useWines";
 import { formatPrice } from "../utils/formatPrice";
 
 import type {
@@ -36,6 +54,32 @@ type WineTableViewProps = {
 export function WineTableView({
   wines,
 }: WineTableViewProps) {
+  const navigate = useNavigate();
+  const deleteWineMutation = useDeleteWine();
+
+  const [menuState, setMenuState] = useState<{
+    anchorEl: HTMLElement;
+    wine: Wine;
+  } | null>(null);
+
+  const [deleteTarget, setDeleteTarget] = useState<Wine | null>(null);
+
+  function closeMenu() {
+    setMenuState(null);
+  }
+
+  function handleDeleteConfirm() {
+    if (!deleteTarget) {
+      return;
+    }
+
+    deleteWineMutation.mutate(deleteTarget.id, {
+      onSuccess: () => {
+        setDeleteTarget(null);
+      },
+    });
+  }
+
   if (wines.length === 0) {
     return (
       <div className="rounded-xl border border-app-border bg-app-surface px-6 py-16 text-center text-app-text-secondary">
@@ -166,6 +210,12 @@ export function WineTableView({
                   <IconButton
                     size="small"
                     aria-label={`${wine.name}の操作`}
+                    onClick={(event) =>
+                      setMenuState({
+                        anchorEl: event.currentTarget,
+                        wine,
+                      })
+                    }
                   >
                     <MoreHoriz />
                   </IconButton>
@@ -175,6 +225,81 @@ export function WineTableView({
           ))}
         </TableBody>
       </Table>
+
+      <Menu
+        anchorEl={menuState?.anchorEl}
+        open={Boolean(menuState)}
+        onClose={closeMenu}
+      >
+        <MenuItem
+          onClick={() => {
+            if (menuState) {
+              navigate(`/admin/wines/${menuState.wine.id}/edit`);
+            }
+
+            closeMenu();
+          }}
+        >
+          <ListItemIcon>
+            <EditOutlined fontSize="small" />
+          </ListItemIcon>
+
+          <ListItemText primary="編集" />
+        </MenuItem>
+
+        <MenuItem
+          onClick={() => {
+            if (menuState) {
+              setDeleteTarget(menuState.wine);
+            }
+
+            closeMenu();
+          }}
+        >
+          <ListItemIcon>
+            <DeleteOutlineOutlined fontSize="small" />
+          </ListItemIcon>
+
+          <ListItemText primary="削除" />
+        </MenuItem>
+      </Menu>
+
+      <Dialog
+        open={Boolean(deleteTarget)}
+        onClose={() => setDeleteTarget(null)}
+      >
+        <DialogTitle>ワインを削除しますか?</DialogTitle>
+
+        <DialogContent>
+          <DialogContentText>
+            「{deleteTarget?.name}」を削除します。この操作は取り消せません。
+          </DialogContentText>
+
+          {deleteWineMutation.isError && (
+            <p className="mt-3 text-sm text-red-700">
+              削除に失敗しました。もう一度お試しください。
+            </p>
+          )}
+        </DialogContent>
+
+        <DialogActions>
+          <Button
+            onClick={() => setDeleteTarget(null)}
+            disabled={deleteWineMutation.isPending}
+          >
+            キャンセル
+          </Button>
+
+          <Button
+            color="error"
+            variant="contained"
+            onClick={handleDeleteConfirm}
+            disabled={deleteWineMutation.isPending}
+          >
+            削除する
+          </Button>
+        </DialogActions>
+      </Dialog>
     </TableContainer>
   );
 }
