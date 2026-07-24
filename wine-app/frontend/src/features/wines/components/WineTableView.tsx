@@ -109,31 +109,15 @@ export function WineTableView({
             </TableCell>
 
             <TableCell>
-              生産者
-            </TableCell>
-
-            <TableCell>
-              生産国
-            </TableCell>
-
-            <TableCell align="center">
-              Vintage
+              サイズ
             </TableCell>
 
             <TableCell align="right">
-              仕入れ価格
-            </TableCell>
-
-            <TableCell align="right">
-              売価
+              価格
             </TableCell>
 
             <TableCell align="right">
               在庫本数
-            </TableCell>
-
-            <TableCell>
-              保管場所
             </TableCell>
 
             <TableCell align="center">
@@ -174,21 +158,7 @@ export function WineTableView({
               </TableCell>
 
               <TableCell>
-                {wine.producer ?? "-"}
-              </TableCell>
-
-              <TableCell>
-                {wine.country ?? "-"}
-              </TableCell>
-
-              <TableCell align="center">
-                {wine.vintage ?? "-"}
-              </TableCell>
-
-              <TableCell align="right">
-                {formatPrice(
-                  wine.purchase_price,
-                )}
+                {wine.size ?? "-"}
               </TableCell>
 
               <TableCell align="right">
@@ -199,10 +169,6 @@ export function WineTableView({
 
               <TableCell align="right">
                 {wine.quantity}
-              </TableCell>
-
-              <TableCell>
-                {wine.location ?? "-"}
               </TableCell>
 
               <TableCell align="center">
