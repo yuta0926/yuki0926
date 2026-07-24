@@ -217,7 +217,12 @@ import {
         searchParams,
         "location",
       ),
-  
+
+      size: getStringParam(
+        searchParams,
+        "size",
+      ),
+
       min_sale_price: getNumberParam(
         searchParams,
         "min_sale_price",

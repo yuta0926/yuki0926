@@ -85,16 +85,10 @@ export function WineSearchForm({
         "style_type",
       );
 
-    const country =
+    const size =
       getOptionalString(
         formData,
-        "country",
-      );
-
-    const location =
-      getOptionalString(
-        formData,
-        "location",
+        "size",
       );
 
     const minSalePrice =
@@ -107,18 +101,6 @@ export function WineSearchForm({
       getOptionalString(
         formData,
         "max_sale_price",
-      );
-
-    const minPurchasePrice =
-      getOptionalString(
-        formData,
-        "min_purchase_price",
-      );
-
-    const maxPurchasePrice =
-      getOptionalString(
-        formData,
-        "max_purchase_price",
       );
 
     const inStock =
@@ -154,12 +136,8 @@ export function WineSearchForm({
       values.style_type = styleType;
     }
 
-    if (country) {
-      values.country = country;
-    }
-
-    if (location) {
-      values.location = location;
+    if (size) {
+      values.size = size;
     }
 
     if (minSalePrice) {
@@ -175,22 +153,6 @@ export function WineSearchForm({
 
       if (Number.isFinite(parsed)) {
         values.max_sale_price = parsed;
-      }
-    }
-
-    if (minPurchasePrice) {
-      const parsed = Number(minPurchasePrice);
-
-      if (Number.isFinite(parsed)) {
-        values.min_purchase_price = parsed;
-      }
-    }
-
-    if (maxPurchasePrice) {
-      const parsed = Number(maxPurchasePrice);
-
-      if (Number.isFinite(parsed)) {
-        values.max_purchase_price = parsed;
       }
     }
 
@@ -224,7 +186,7 @@ export function WineSearchForm({
         boxShadow: 2,
       }}
     >
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-[minmax(200px,2fr)_repeat(9,minmax(110px,1fr))_auto]">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-[minmax(200px,2fr)_repeat(6,minmax(110px,1fr))_auto]">
         <TextField
           name="keyword"
           label="キーワード"
@@ -311,20 +273,10 @@ export function WineSearchForm({
         </FormControl>
 
         <TextField
-          name="country"
-          label="生産国"
+          name="size"
+          label="サイズ"
           defaultValue={
-            initialValues.country ?? ""
-          }
-          placeholder="すべて"
-          fullWidth
-        />
-
-        <TextField
-          name="location"
-          label="保管場所"
-          defaultValue={
-            initialValues.location ?? ""
+            initialValues.size ?? ""
           }
           placeholder="すべて"
           fullWidth
@@ -332,7 +284,7 @@ export function WineSearchForm({
 
         <TextField
           name="min_sale_price"
-          label="売価(下限)"
+          label="価格(下限)"
           type="number"
           defaultValue={
             initialValues.min_sale_price ?? ""
@@ -348,42 +300,10 @@ export function WineSearchForm({
 
         <TextField
           name="max_sale_price"
-          label="売価(上限)"
+          label="価格(上限)"
           type="number"
           defaultValue={
             initialValues.max_sale_price ?? ""
-          }
-          placeholder="指定なし"
-          fullWidth
-          slotProps={{
-            htmlInput: {
-              min: 0,
-            },
-          }}
-        />
-
-        <TextField
-          name="min_purchase_price"
-          label="仕入値(下限)"
-          type="number"
-          defaultValue={
-            initialValues.min_purchase_price ?? ""
-          }
-          placeholder="0"
-          fullWidth
-          slotProps={{
-            htmlInput: {
-              min: 0,
-            },
-          }}
-        />
-
-        <TextField
-          name="max_purchase_price"
-          label="仕入値(上限)"
-          type="number"
-          defaultValue={
-            initialValues.max_purchase_price ?? ""
           }
           placeholder="指定なし"
           fullWidth

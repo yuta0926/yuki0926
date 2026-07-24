@@ -328,6 +328,14 @@ def get_wines(
         ),
     ] = None,
 
+    size: Annotated[
+        str | None,
+        Query(
+            max_length=50,
+            description="ボトルサイズ",
+        ),
+    ] = None,
+
     min_sale_price: Annotated[
         int | None,
         Query(
@@ -431,6 +439,12 @@ def get_wines(
     if location:
         filters.append(
             Wine.location == location,
+        )
+
+    # サイズによる絞り込み(管理者向けのみ)
+    if size:
+        filters.append(
+            Wine.size == size,
         )
 
     # 仕入値による絞り込み(管理者向けのみ)

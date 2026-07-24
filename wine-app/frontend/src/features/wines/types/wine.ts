@@ -117,7 +117,8 @@ export type Wine = {
   
     vintage?: number;
     location?: string;
-  
+    size?: string;
+
     min_sale_price?: number;
     max_sale_price?: number;
 
@@ -128,7 +129,7 @@ export type Wine = {
 
     sort_by?: WineSortField;
     sort_order?: SortOrder;
-  
+
     skip?: number;
     limit?: number;
   };
